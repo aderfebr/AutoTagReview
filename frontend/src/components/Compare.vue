@@ -32,15 +32,15 @@
         </div>
         
         <div id="results-container">
+          <!-- TF-IDF 算法结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
-              <span class="algorithm-icon" style="background-color: #FFB7B2;">
-              </span>
-              <span class="algorithm-name">大模型（无微调）</span>
+              <span class="algorithm-icon" style="background-color: #FFB7B2;"></span>
+              <span class="algorithm-name">TF-IDF</span>
             </div>
             <div class="algorithm-result">
-              <div v-if="tags_llm_wo.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in tags_llm_wo" :key="index" class="tag">{{ tag }}</span>
+              <div v-if="results.tfidf.length > 0" class="result-tags large">
+                <span v-for="(tag, index) in results.tfidf" :key="'tfidf-'+index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
@@ -50,15 +50,69 @@
           
           <div class="algorithm-divider"></div>
           
+          <!-- LDA 算法结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
-              <span class="algorithm-icon" style="background-color: #FF9AA2;">
-              </span>
+              <span class="algorithm-icon" style="background-color: #FFDAC1;"></span>
+              <span class="algorithm-name">LDA</span>
+            </div>
+            <div class="algorithm-result">
+              <div v-if="results.lda.length > 0" class="result-tags large">
+                <span v-for="(tag, index) in results.lda" :key="'lda-'+index" class="tag">{{ tag }}</span>
+              </div>
+              <div v-else class="empty-state">
+                <i class="fa fa-info-circle"></i> 暂无标签数据
+              </div>
+            </div>
+          </div>
+          
+          <div class="algorithm-divider"></div>
+          
+          <!-- TextRank 算法结果 -->
+          <div class="algorithm-card">
+            <div class="algorithm-header">
+              <span class="algorithm-icon" style="background-color: #E2F0CB;"></span>
+              <span class="algorithm-name">TextRank</span>
+            </div>
+            <div class="algorithm-result">
+              <div v-if="results.textrank.length > 0" class="result-tags large">
+                <span v-for="(tag, index) in results.textrank" :key="'textrank-'+index" class="tag">{{ tag }}</span>
+              </div>
+              <div v-else class="empty-state">
+                <i class="fa fa-info-circle"></i> 暂无标签数据
+              </div>
+            </div>
+          </div>
+          
+          <div class="algorithm-divider"></div>
+          
+          <!-- 大模型（无微调）结果 -->
+          <div class="algorithm-card">
+            <div class="algorithm-header">
+              <span class="algorithm-icon" style="background-color: #B5EAD7;"></span>
+              <span class="algorithm-name">大模型（无微调）</span>
+            </div>
+            <div class="algorithm-result">
+              <div v-if="results.llm_wo.length > 0" class="result-tags large">
+                <span v-for="(tag, index) in results.llm_wo" :key="'llmwo-'+index" class="tag">{{ tag }}</span>
+              </div>
+              <div v-else class="empty-state">
+                <i class="fa fa-info-circle"></i> 暂无标签数据
+              </div>
+            </div>
+          </div>
+          
+          <div class="algorithm-divider"></div>
+          
+          <!-- 大模型（微调）结果 -->
+          <div class="algorithm-card">
+            <div class="algorithm-header">
+              <span class="algorithm-icon" style="background-color: #C7CEEA;"></span>
               <span class="algorithm-name">大模型（微调）</span>
             </div>
             <div class="algorithm-result">
-              <div v-if="tags_llm_w.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in tags_llm_w" :key="index" class="tag">{{ tag }}</span>
+              <div v-if="results.llm_w.length > 0" class="result-tags large">
+                <span v-for="(tag, index) in results.llm_w" :key="'llmw-'+index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
@@ -77,13 +131,30 @@ import { ref } from 'vue';
 import Nav from './Nav.vue';
 
 const userInput = ref('');
-const tags_llm_wo = ref([]);
-const tags_llm_w = ref([]);
 const isLoading = ref(false);
+const results = ref({
+  tfidf: [],
+  lda: [],
+  textrank: [],
+  llm_wo: [],
+  llm_w: []
+});
 
 const analyze = async () => {
-  tags_llm_wo.value = [];
-  tags_llm_w.value = [];
+  // 清空之前的结果和进度
+  results.value = {
+    tfidf: [],
+    lda: [],
+    textrank: [],
+    llm_wo: [],
+    llm_w: []
+  };
+  
+  if (!userInput.value.trim()) {
+    alert('请输入评论内容');
+    return;
+  }
+  
   isLoading.value = true;
   
   try {
@@ -97,29 +168,43 @@ const analyze = async () => {
     
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
-    let result = '';
+    let buffer = '';
     
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      result += decoder.decode(value, { stream: true });
       
-      try {
-        const data = JSON.parse(result);
-        if (data?.res_wo) {
-          tags_llm_wo.value = Array.isArray(data.res_wo) ? data.res_wo : [data.res_wo];
+      buffer += decoder.decode(value, { stream: true });
+      
+      // 处理可能的多条消息
+      let boundary;
+      while ((boundary = buffer.indexOf('\n')) !== -1) {
+        const message = buffer.slice(0, boundary);
+        buffer = buffer.slice(boundary + 1);
+        
+        if (message.trim() === '') continue;
+        
+        try {
+          const data = JSON.parse(message);
+          
+          // 更新进度和结果
+          if (data.algorithm) {
+            if (data.result !== undefined) {
+              const resultArray = Array.isArray(data.result) ? data.result : [data.result];
+              results.value[data.algorithm] = [...results.value[data.algorithm], ...resultArray];
+            }
+          }
+        } catch (e) {
+          console.error('解析消息失败:', e);
         }
-        if (data?.res_w) {
-          tags_llm_w.value = Array.isArray(data.res_w) ? data.res_w : [data.res_w];
-        }
-        result = '';
-      } catch (e) {
       }
     }
   } catch (error) {
     console.error('API调用失败:', error);
-    tags_llm_wo.value = ['分析失败'];
-    tags_llm_w.value = ['分析失败'];
+    // 为每个算法设置错误状态
+    Object.keys(results.value).forEach(key => {
+      results.value[key] = ['分析失败'];
+    });
   } finally {
     isLoading.value = false;
   }

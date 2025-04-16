@@ -1,5 +1,5 @@
 node_modules/
 __pycache__/
-app/qwen/qwen_lora/
-app/qwen/qwen_sft/
-app/qwen/Qwen2.5-0.5B-Instruct/
+app/AKE/qwen_lora/
+app/AKE/qwen_sft/
+app/AKE/Qwen2.5-0.5B-Instruct/
