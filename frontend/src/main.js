@@ -11,7 +11,9 @@ const router = createRouter({
     routes:[
         { path: '/', component: ()=> import('./components/Home.vue') },
         { path: '/data', component: ()=> import('./components/Data.vue') },
-        { path: '/compare', component: ()=> import('./components/Compare.vue') },
+        { path: '/data/review', component: ()=> import('./components/Review.vue') },
+        { path: '/tag/compare', component: ()=> import('./components/Compare.vue') },
+        { path: '/tag/batch', component: ()=> import('./components/Batch.vue') },
     ]
 })
 

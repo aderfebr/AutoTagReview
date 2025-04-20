@@ -242,7 +242,6 @@ body {
   color: white;
   padding: 20px 0;
   text-align: center;
-  z-index: 100;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -270,10 +269,8 @@ body {
 
 /* 左侧导航栏 */
 #left {
+  background: rgba(0, 120, 240, 0.15);
   grid-area: left;
-  background: linear-gradient(135deg,rgba(0, 139, 189, 0.7),rgba(80, 0, 192, 0.7));
-  padding: 20px 0;
-  z-index: 10;
 }
 
 #right {
@@ -281,6 +278,7 @@ body {
   background: linear-gradient(to bottom, rgba(230, 235, 245, 0.5), rgba(220, 225, 240, 0.5));
   overflow-y: auto;
   padding: 30px 0;
+  z-index: 10;
 }
 
 /* 内容区块样式 */
@@ -518,6 +516,7 @@ div::-webkit-scrollbar {
 }
 
 div::-webkit-scrollbar-thumb {
+  cursor: pointer;
   border-radius: 10px;
   box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
   background: rgba(180, 180, 180, 0.6);

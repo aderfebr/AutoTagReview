@@ -20,4 +20,5 @@ from app import views
 
 urlpatterns = [
     path("api/compare/", views.compare),
+    path("api/review/", views.review),
 ]
