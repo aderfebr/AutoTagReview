@@ -10,50 +10,64 @@
     </div>
     
     <div id="right">
-    <div class="content-section input-section">
-        <div id="input-container">
-        <h3><i class="fa fa-search"></i> 查询评论</h3>
-        <div class="search-container">
-            <input 
-            type="text" 
-            v-model="productId" 
-            placeholder="请输入产品ID..."
-            @keyup.enter="fetchComments"
-            >
-            <button id="search" @click="fetchComments" :disabled="isLoadingComments">
-            <i class="fa" :class="isLoadingComments ? 'fa-spinner fa-spin' : 'fa-search'"></i> 
-            {{ isLoadingComments ? '查询中...' : '查询评论' }}
-            </button>
-        </div>
-        </div>
-    </div>
-    
-    <div class="content-section comments-section">
-        <div id="comments-header">
-            <h3><i class="fa fa-comments"></i> 评论列表</h3>
-            <div v-if="comments.length > 0" class="pagination-info">
+    <div class="content-section history-section">
+        <div id="history-header">
+            <h3><i class="fa fa-history"></i> 历史记录</h3>
+            <div v-if="history.length > 0" class="pagination-info">
                 共 {{ pagination.total }} 条评论，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
             </div>
         </div>
         
-        <div id="comments-container">
-            <div v-if="comments.length === 0" class="empty-comments">
-                <i class="fa fa-comment-slash"></i>
-                <p>暂无评论数据，请输入产品ID查询</p>
-            </div>
-            
-            <div v-else>
-                <div class="comment-list">
-                    <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-                        <div class="comment-header">
-                            <span class="comment-user">{{ comment.nickname }}</span>
-                            <span class="comment-date">{{ comment.time }}</span>
+        <div id="history-container">
+            <div>
+                <div class="history-list">
+                    <div v-for="(item, index) in history" :key="index" class="history-item">
+                        <div class="comment-section">
+                            <div class="comment-label">评论内容：</div>
+                            <div class="comment-content">{{ item.comment }}</div>
                         </div>
-                        <div class="comment-content">{{ comment.review }}</div>
-                        <div class="comment-actions">
-                            <button class="analyze-btn" @click="analyzeComment(comment.review)">
-                                <i class="fa fa-tag"></i> 标签生成
-                            </button>
+                        <div class="history-divider"></div>
+                        <div class="analysis-results">
+                            <div class="analysis-column">
+                                <div class="analysis-item">
+                                    <div class="analysis-label">TF-IDF：</div>
+                                    <div class="tag-list">
+                                        <span v-for="(tag, tagIndex) in item.tfidf" :key="'tfidf-'+tagIndex" class="tag">{{ tag }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-item">
+                                    <div class="analysis-label">LDA：</div>
+                                    <div class="tag-list">
+                                        <span v-for="(tag, tagIndex) in item.lda" :key="'lda-'+tagIndex" class="tag">{{ tag }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-column">
+                                <div class="analysis-item">
+                                    <div class="analysis-label">TextRank：</div>
+                                    <div class="tag-list">
+                                        <span v-for="(tag, tagIndex) in item.textrank" :key="'textrank-'+tagIndex" class="tag">{{ tag }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="analysis-item">
+                                    <div class="analysis-label">LLM（无微调）：</div>
+                                    <div class="tag-list">
+                                        <span v-for="(tag, tagIndex) in item.llm_wo" :key="'llmwo-'+tagIndex" class="tag">{{ tag }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analysis-column">
+                                <div class="analysis-item">
+                                    <div class="analysis-label">LLM（微调）：</div>
+                                    <div class="tag-list">
+                                        <span v-for="(tag, tagIndex) in item.llm_w" :key="'llmw-'+tagIndex" class="tag">{{ tag }}</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -101,12 +115,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import Nav from './Nav.vue'
 
-const productId = ref('')
-const comments = ref([])
-const isLoadingComments = ref(false)
+const history = ref([])
+const isLoadingHistory = ref(false)
 const pagination = ref({
     total: 0,
     pages: 0,
@@ -114,8 +126,8 @@ const pagination = ref({
 })
 
 onMounted(() => {
-  fetchComments();
-})
+  fetchHistory();
+});
 
 // 计算显示的页码范围
 const visiblePages = computed(() => {
@@ -145,25 +157,16 @@ const showEllipsis = computed(() => {
            visiblePages.value[visiblePages.value.length - 1] < pagination.value.pages
 })
 
-const fetchComments = async () => {
-  isLoadingComments.value = true
+const fetchHistory = async () => {
+  isLoadingHistory.value = true
   try {
-    const params = new URLSearchParams()
-    params.append('page', pagination.value.current)
-    
-    if (productId.value.trim()) {
-      params.append('product_id', productId.value.trim())
-    } else {
-      params.append('all', 'true')
-    }
-    
-    const response = await fetch(`http://localhost:8000/api/review/?${params.toString()}`)
+    const response = await fetch(`http://localhost:8000/api/taghistory/?page=${pagination.value.current}`)
     if (!response.ok) {
       throw new Error('获取评论失败')
     }
     const data = await response.json()
     
-    comments.value = data.results
+    history.value = data.results
     pagination.value = {
       total: data.count,
       pages: data.num_pages,
@@ -174,7 +177,7 @@ const fetchComments = async () => {
     console.error('获取评论失败:', error)
     alert('获取评论失败，请稍后重试')
   } finally {
-    isLoadingComments.value = false
+    isLoadingHistory.value = false
   }
 }
 
@@ -184,19 +187,7 @@ const changePage = (page) => {
         return
     }
     pagination.value.current = page
-    fetchComments()
-}
-
-const router = useRouter()
-const analyzeComment = (comment) => {
-  const encodedComment = encodeURIComponent(comment)
-  
-  router.push({
-    path: '/tag/compare',
-    query: {
-      text: encodedComment
-    }
-  })
+    fetchHistory()
 }
 </script>
 
@@ -264,7 +255,6 @@ body {
 
 #right {
   grid-area: right;
-  background: #f8fafc;
   overflow-y: auto;
   padding: 30px;
   z-index: 10;
@@ -284,188 +274,109 @@ body {
   transform: translateY(-2px);
 }
 
-/* 输入区域样式 */
-#input-container {
-    background: rgba(180, 210, 240, 0.15);
-    padding: 30px;
-}
-
-#input-container h3 {
-  font-size: 18px;
-  color: #4a6fa5;
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-#input-container h3 i {
-  margin-right: 10px;
-}
-
-.search-container {
-  display: flex;
-  gap: 10px;
-}
-
-.search-container input {
-  flex: 1;
-  padding: 12px 15px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-  font-size: 15px;
-  transition: all 0.3s ease;
-}
-
-.search-container input:focus {
-  outline: none;
-  border-color: #4a6fa5;
-  box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
-}
-
-/* 按钮样式 */
-button {
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-}
-
-button#search {
-  background: linear-gradient(to right, #4f46e5, #7c3aed);
-  color: white;
-  font-size: 16px;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-}
-
-button#search:hover {
-  background: linear-gradient(to right, #4338ca, #6d28d9);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
-}
-
-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
 /* 评论列表样式 */
-.comments-section {
-    background: rgba(240, 180, 210, 0.15);
+.history-section {
+  background: rgba(180, 210, 240, 0.15);
 }
 
-#comments-header {
+#history-header {
   padding: 20px 25px 0;
 }
 
-#comments-header h3 {
+#history-header h3 {
   font-size: 18px;
   color: #4a6fa5;
   display: flex;
   align-items: center;
 }
 
-#comments-header h3 i {
+#history-header h3 i {
   margin-right: 10px;
 }
 
-.empty-comments {
-  text-align: center;
-  padding: 60px 20px;
-  color: #64748b;
-}
-
-.empty-comments i {
-  font-size: 50px;
-  margin-bottom: 15px;
-  color: #cbd5e1;
-}
-
-.empty-comments p {
-  font-size: 16px;
-  margin-top: 10px;
-}
-
-.comment-list {
+.history-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 0 25px 25px;
 }
 
-.comment-item {
+.history-item {
   border-radius: 10px;
   padding: 20px;
   transition: all 0.3s ease;
   border: 1px solid #f1f5f9;
 }
 
-.comment-item:hover {
+.history-item:hover {
 background-color: rgba(255, 255, 255, 0.3);
 transform: translateY(-2px);
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.comment-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #64748b;
-  gap: 15px;
+.comment-section {
+    margin-bottom: 16px;
+    border-radius: 6px;
 }
 
-.comment-user {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.comment-rating {
-  color: #f59e0b;
-}
-
-.comment-date {
-  margin-left: auto;
-  color: #94a3b8;
-  font-size: 13px;
+.comment-label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 6px;
 }
 
 .comment-content {
-  line-height: 1.7;
-  margin-bottom: 15px;
-  color: #334155;
-  font-size: 15px;
+    line-height: 1.5;
+    color: #333;
 }
 
-.comment-actions {
-  display: flex;
-  justify-content: flex-end;
+.analysis-results {
+    display: flex;
+    gap: 16px;
+    margin-top: 12px;
 }
 
-.analyze-btn {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  padding: 6px 14px;
-  font-size: 13px;
-  border-radius: 20px;
+.analysis-column {
+    flex: 1;
+    min-width: 0;
 }
 
-.analyze-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
+.analysis-item {
+    margin-bottom: 12px;
 }
 
-.analyze-btn i {
-  margin-right: 6px;
-  font-size: 12px;
+.analysis-label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag {
+    background-color: #e9f5ff;
+    color: #1a73e8;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 13px;
+    white-space: nowrap;
 }
 
 .pagination-info {
     margin: 10px 0;
     font-size: 14px;
     color: #64748b;
+}
+
+.history-divider {
+    height: 2px;
+    background-color: #d0d0d0;
+    margin: 16px 0;
 }
 
 .pagination-container {

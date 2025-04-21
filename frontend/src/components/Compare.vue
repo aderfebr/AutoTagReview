@@ -18,10 +18,20 @@
             placeholder="请输入要分析的评论内容..."
             rows="4"
           ></textarea>
-          <button id="analyze" @click="analyze()" :disabled="isLoading">
-            <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i> 
-            {{ isLoading ? '分析中...' : '开始分析' }}
-          </button>
+          <div class="batch-actions">
+            <button 
+              id="analyze" 
+              @click="analyze" 
+              :disabled="isLoading"
+              :class="{ 'loading': isLoading }"
+            >
+              <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i> 
+              {{ isLoading ? '分析中...' : '开始分析' }}
+            </button>
+            <div v-if="isLoading" class="progress-bar">
+              <div class="progress" :style="{ width: progress + '%' }"></div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -127,7 +137,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import Nav from './Nav.vue';
 
 const userInput = ref('');
@@ -138,6 +149,14 @@ const results = ref({
   textrank: [],
   llm_wo: [],
   llm_w: []
+});
+
+const route = useRoute();
+onMounted(() => {
+  if (route.query.text) {
+    userInput.value = decodeURIComponent(route.query.text);
+    analyze();
+  }
 });
 
 const analyze = async () => {
@@ -482,21 +501,33 @@ button#analyze {
   color: white;
   font-size: 16px;
   box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+  flex: 1;
+  justify-content: center;
 }
 
-button#analyze:hover {
+button#analyze:hover:not(:disabled) {
   background: linear-gradient(to right, #0069d9, #138496);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
 }
 
-button#analyze i {
+button#analyze.loading {
+  background: linear-gradient(to right, #0069d9, #138496);
+}
+
+button i {
   margin-right: 8px;
 }
 
 button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.batch-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .empty-state {

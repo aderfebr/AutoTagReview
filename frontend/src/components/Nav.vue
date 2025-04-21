@@ -2,9 +2,9 @@
   <div class="nav-container">
     <ul class="main-menu">
       <li :class="{ 'active-menu': $route.path === '/' }">
-        <div class="menu-head">
+        <router-link to="/" class="menu-head">
           <i class="fa fa-home"/>&ensp;首页
-        </div>
+        </router-link>
       </li>
       <li 
         :class="{ 
@@ -118,6 +118,13 @@ const toggleMenu = (menu) => {
 .main-menu > li > .menu-head:hover {
   color: #1a73e8;
   background-color: #e1f5fe;
+}
+
+.main-menu > li > a.menu-head {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
 }
 
 .has-submenu .arrow {
