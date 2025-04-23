@@ -28,6 +28,26 @@
       </li>
       <li 
         :class="{ 
+          'expanded': expandedMenu === 'label',
+          'active-menu': $route.path.startsWith('/label')
+        }" 
+        class="has-submenu"
+      >
+        <div class="menu-head" @click="toggleMenu('label')">
+          <i class="fa fa-search"/>&ensp;问题分类
+          <i class="fa fa-angle-down arrow" />
+        </div>
+        <ul class="submenu">
+          <li :class="{ 'active-submenu': $route.path === '/label/compare' }">
+            <router-link to="/label/compare">算法比较</router-link>
+          </li>
+          <li :class="{ 'active-submenu': $route.path === '/label/history' }">
+            <router-link to="/label/history">历史记录</router-link>
+          </li>
+        </ul>
+      </li>
+      <li 
+        :class="{ 
           'expanded': expandedMenu === 'tag',
           'active-menu': $route.path.startsWith('/tag')
         }" 
@@ -38,37 +58,23 @@
           <i class="fa fa-angle-down arrow" />
         </div>
         <ul class="submenu">
-          <li :class="{ 'active-submenu': $route.path === '/tag/compare' }">
-            <router-link to="/tag/compare">算法比较</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/tag/single' }">
+            <router-link to="/tag/single">单条分析</router-link>
           </li>
           <li :class="{ 'active-submenu': $route.path === '/tag/batch' }">
-            <router-link to="/tag/batch">批量处理</router-link>
+            <router-link to="/tag/batch">批量分析</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/tag/spider' }">
-            <router-link to="/tag/spider">自动爬虫</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/tag/file' }">
+            <router-link to="/tag/file">文件分析</router-link>
           </li>
           <li :class="{ 'active-submenu': $route.path === '/tag/history' }">
             <router-link to="/tag/history">历史记录</router-link>
           </li>
-        </ul>
-      </li>
-      <li 
-        :class="{ 
-          'expanded': expandedMenu === 'security',
-          'active-menu': $route.path.startsWith('/security')
-        }" 
-        class="has-submenu"
-      >
-        <div class="menu-head" @click="toggleMenu('security')">
-          <i class="fa fa-search"/>&ensp;相关推荐
-          <i class="fa fa-angle-down arrow" />
-        </div>
-        <ul class="submenu">
-          <li :class="{ 'active-submenu': $route.path === '/security/settings' }">
-            <router-link to="/security/settings">推荐设置</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/tag/visualization' }">
+            <router-link to="/tag/visualization">数据可视化</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/security/history' }">
-            <router-link to="/security/history">历史推荐</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/tag/recommendation' }">
+            <router-link to="/tag/recommendation">相关推荐</router-link>
           </li>
         </ul>
       </li>
@@ -78,9 +84,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRoute } from 'vue-router'
 
-const route = useRoute()
 const expandedMenu = ref(null)
 
 const toggleMenu = (menu) => {
@@ -146,7 +150,7 @@ const toggleMenu = (menu) => {
 }
 
 .has-submenu.expanded .submenu {
-  max-height: 200px;
+  max-height: 300px;
 }
 
 .submenu li a {

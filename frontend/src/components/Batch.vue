@@ -12,47 +12,21 @@
     <div id="right">
       <div class="content-section input-section">
         <div id="input-container">
-          <h3><i class="fa fa-upload"></i> 上传评论文件</h3>
+          <h3><i class="fa fa-edit"></i> 批量输入评论</h3>
           
-          <div class="upload-area" @dragover.prevent="dragover" @drop.prevent="drop">
-            <div v-if="!file" class="upload-prompt" @click="triggerFileInput">
-              <i class="fa fa-cloud-upload"></i>
-              <p>拖拽文件到此处或点击选择文件</p>
-              <input 
-                type="file" 
-                id="fileInput" 
-                @change="handleFileSelect"
-                hidden
-              >
-            </div>
-            <div v-else class="file-info">
-              <div class="file-details">
-                <i class="fa" :class="getFileIcon(file.name)"></i>
-                <div>
-                  <p class="filename">{{ file.name }}</p>
-                  <p class="filesize">{{ formatFileSize(file.size) }}</p>
-                </div>
-              </div>
-              <button class="remove-file-btn" @click="removeFile">
-                <i class="fa fa-times"></i>
-              </button>
-            </div>
-          </div>
-          
-          <div class="file-requirements">
-            <h4>文件要求：</h4>
-            <ul>
-              <li>建议格式: 纯文本</li>
-              <li>文本文件每行一条评论</li>
-              <li>文件大小不超过 10MB</li>
-            </ul>
+          <div class="text-input-area">
+            <textarea 
+              v-model="commentInput" 
+              placeholder="请输入多条评论，每条评论占一行"
+              rows="10"
+            ></textarea>
           </div>
           
           <div class="batch-actions">
             <button 
               id="analyze" 
               @click="analyzeBatch" 
-              :disabled="isLoading || !file"
+              :disabled="isLoading || !commentInput.trim()"
               :class="{ 'loading': isLoading }"
             >
               <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i> 
@@ -72,10 +46,11 @@
           <div v-if="batchResults.length > 0" class="results-container">
             <div v-if="isLoading" class="processing-indicator">
               <i class="fa fa-spinner fa-spin"></i>
-              <span>正在处理第 {{ batchResults.length + 1 }} 条评论，共 {{ totalComments }} 条评论</span>
+              <span>正在分析第 {{ batchResults.length + 1 }} 条评论，共 {{ totalComments }} 条评论</span>
             </div>
             
             <div v-for="(result, index) in paginatedResults" :key="'result-'+index" class="result-item">
+              <div class="comment-label">评论内容：</div>
               <div class="comment-content">{{ result.comment }}</div>
               <div class="tags-container">
               <div class="tag-group">
@@ -104,12 +79,12 @@
           
           <div v-else-if="isLoading && batchResults.length === 0" class="processing-indicator first-item">
             <i class="fa fa-spinner fa-spin"></i>
-            <span>正在处理第 1 条评论，共 {{ totalComments }} 条评论</span>
+            <span>正在分析第 1 条评论，共 {{ totalComments }} 条评论</span>
           </div>
           
           <div v-else class="empty-state">
             <i class="fa fa-info-circle"></i>
-            <p>请上传文件并开始分析</p>
+            <p>请输入评论并开始分析</p>
           </div>
           
           <div class="pagination-controls" v-if="batchResults.length > 0">
@@ -131,7 +106,7 @@
 import { ref, computed } from 'vue';
 import Nav from './Nav.vue';
 
-const file = ref(null);
+const commentInput = ref('');
 const isLoading = ref(false);
 const progress = ref(0);
 const analysisComplete = ref(false);
@@ -139,94 +114,9 @@ const batchResults = ref([]);
 const currentPage = ref(1);
 const totalComments = ref(0);
 
-// 触发文件选择
-const triggerFileInput = () => {
-  document.getElementById('fileInput').click();
-};
-
-// 处理文件选择
-const handleFileSelect = (event) => {
-  const selectedFile = event.target.files[0];
-  if (selectedFile) {
-    validateAndSetFile(selectedFile);
-  }
-};
-
-// 拖放处理
-const dragover = (event) => {
-  event.currentTarget.classList.add('dragover');
-};
-
-const drop = (event) => {
-  event.currentTarget.classList.remove('dragover');
-  const droppedFile = event.dataTransfer.files[0];
-  if (droppedFile) {
-    validateAndSetFile(droppedFile);
-  }
-};
-
-// 验证并设置文件
-const validateAndSetFile = (selectedFile) => {
-  const maxSize = 10 * 1024 * 1024; // 10MB
-  if (selectedFile.size > maxSize) {
-    alert('文件大小不能超过 10MB');
-    return;
-  }
-  
-  file.value = selectedFile;
-  analysisComplete.value = false;
-  batchResults.value = [];
-};
-
-// 移除文件
-const removeFile = () => {
-  file.value = null;
-  analysisComplete.value = false;
-  batchResults.value = [];
-};
-
-// 获取文件图标
-const getFileIcon = (filename) => {
-  if (filename.endsWith('.csv')) return 'fa-file-csv';
-  if (filename.endsWith('.xlsx')) return 'fa-file-excel';
-  return 'fa-file-text';
-};
-
-// 格式化文件大小
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes';
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-// 读取文件内容
-const readFileContent = async () => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        let comments = [];
-        const content = e.target.result;
-        comments = content.split('\n').map(line => line.trim()).filter(line => line);
-        resolve(comments);
-      } catch (error) {
-        reject(error);
-      }
-    };
-    
-    reader.onerror = () => {
-      reject(new Error('文件读取失败'));
-    };
-    reader.readAsText(file.value);
-  });
-};
-
 // 批量分析
 const analyzeBatch = async () => {
-  if (!file.value) return;
+  if (!commentInput.value.trim()) return;
   
   try {
     isLoading.value = true;
@@ -234,10 +124,14 @@ const analyzeBatch = async () => {
     analysisComplete.value = false;
     currentPage.value = 1; 
     
-    const comments = await readFileContent();
+    const comments = commentInput.value
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line);
+      
     totalComments.value = comments.length;
     if (comments.length === 0) {
-      throw new Error('文件中没有找到有效的评论内容');
+      throw new Error('请输入有效的评论内容');
     }
     
     batchResults.value = [];
@@ -310,7 +204,6 @@ const analyzeBatch = async () => {
       batchResults.value.push(newResult);
       
       progress.value = Math.round(((i + 1) / comments.length) * 100);
-      
     }
     
     analysisComplete.value = true;
@@ -321,6 +214,7 @@ const analyzeBatch = async () => {
     isLoading.value = false;
   }
 };
+
 
 // 分页计算属性
 const totalPages = computed(() => batchResults.value.length);
@@ -365,11 +259,12 @@ body {
 #page-title {
   grid-area: header;
   position: static;
-  background: linear-gradient(135deg,rgba(0, 139, 189, 0.7),rgba(80, 0, 192, 0.7));
+  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
   color: white;
   padding: 20px 0;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 #page-title h1 {
@@ -635,10 +530,15 @@ button:disabled {
 }
 
 .result-item {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.comment-label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 6px;
 }
 
 .comment-content {

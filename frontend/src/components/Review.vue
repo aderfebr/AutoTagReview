@@ -227,11 +227,12 @@ body {
 #page-title {
   grid-area: header;
   position: static;
-  background: linear-gradient(135deg,rgba(0, 139, 189, 0.7),rgba(80, 0, 192, 0.7));
+  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
   color: white;
   padding: 20px 0;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 #page-title h1 {
@@ -330,7 +331,6 @@ button {
   cursor: pointer;
   transition: all 0.3s ease;
   font-weight: 500;
-  display: flex;
   align-items: center;
 }
 
@@ -487,7 +487,6 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
 .pagination-button:hover:not(:disabled) {
     background-color: #e2e8f0;
-    transform: translateY(-1px);
 }
 
 .pagination-button:disabled {

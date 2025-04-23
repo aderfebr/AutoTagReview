@@ -11,12 +11,23 @@
     
     <div id="right">
     <div class="content-section history-section">
-        <div id="history-header">
-            <h3><i class="fa fa-history"></i> 历史记录</h3>
-            <div v-if="history.length > 0" class="pagination-info">
-                共 {{ pagination.total }} 条评论，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
+      <div id="history-header">
+        <div class="header-content">
+            <div class="header-left">
+                <h3><i class="fa fa-history"></i> 历史记录</h3>
+                <div v-if="history.length > 0" class="pagination-info">
+                    共 {{ pagination.total }} 条评论，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
+                </div>
             </div>
+            <button 
+                v-if="history.length > 0" 
+                @click="clearHistory"
+                class="clear-button"
+            >
+                <i class="fa fa-trash"></i> 清空记录
+            </button>
         </div>
+      </div>
         
         <div id="history-container">
             <div>
@@ -25,6 +36,7 @@
                         <div class="comment-section">
                             <div class="comment-label">评论内容：</div>
                             <div class="comment-content">{{ item.comment }}</div>
+                            <div class="time-section">{{ item.time }}</div>
                         </div>
                         <div class="history-divider"></div>
                         <div class="analysis-results">
@@ -73,7 +85,7 @@
                 </div>
                 
                 <!-- 分页器 -->
-                <div class="pagination-container">
+                <div class="pagination-container" v-if="history.length > 0">
                 <button 
                 @click="changePage(pagination.current - 1)"
                 :disabled="pagination.current === 1"
@@ -104,7 +116,11 @@
                 >
                 下一页 <i class="fa fa-chevron-right"></i>
                 </button>
-            </div>
+              </div>
+                  <div v-else class="empty-history">
+                  <i class="fa fa-inbox"></i>
+                  <p>暂无历史记录</p>
+              </div>
             </div>
         </div>
     </div>
@@ -128,6 +144,33 @@ const pagination = ref({
 onMounted(() => {
   fetchHistory();
 });
+
+const clearHistory = async () => {
+    if (!confirm('确定要清空所有历史记录吗？此操作不可恢复。')) {
+        return
+    }
+    
+    try {
+        const response = await fetch('http://localhost:8000/api/taghistory/clear/', {
+            method: 'POST'
+        })
+        
+        if (!response.ok) {
+            throw new Error('清空记录失败')
+        }
+        
+        history.value = []
+        pagination.value = {
+            total: 0,
+            pages: 0,
+            current: 1
+        }
+        alert('历史记录已清空')
+    } catch (error) {
+        console.error('清空记录失败:', error)
+        alert('清空记录失败，请稍后重试')
+    }
+}
 
 // 计算显示的页码范围
 const visiblePages = computed(() => {
@@ -218,11 +261,12 @@ body {
 #page-title {
   grid-area: header;
   position: static;
-  background: linear-gradient(135deg,rgba(0, 139, 189, 0.7),rgba(80, 0, 192, 0.7));
+  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
   color: white;
   padding: 20px 0;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 #page-title h1 {
@@ -280,7 +324,7 @@ body {
 }
 
 #history-header {
-  padding: 20px 25px 0;
+    padding: 20px 25px 0;
 }
 
 #history-header h3 {
@@ -292,6 +336,37 @@ body {
 
 #history-header h3 i {
   margin-right: 10px;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.clear-button {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 1px solid #ffcdd2;
+    margin-top: 5px;
+}
+
+.clear-button:hover {
+    background-color: #ffcdd2;
+}
+
+.clear-button i {
+    margin-right: 5px;
 }
 
 .history-list {
@@ -328,6 +403,15 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 .comment-content {
     line-height: 1.5;
     color: #333;
+}
+
+.time-section {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 13px;
+    color: #888;
 }
 
 .analysis-results {
@@ -368,7 +452,7 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .pagination-info {
-    margin: 10px 0;
+    margin: 0;
     font-size: 14px;
     color: #64748b;
 }
@@ -387,6 +471,16 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     gap: 10px;
 }
 
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  align-items: center;
+}
+
 .pagination-button {
     padding: 8px 16px;
     background-color: #f1f5f9;
@@ -398,7 +492,6 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
 .pagination-button:hover:not(:disabled) {
     background-color: #e2e8f0;
-    transform: translateY(-1px);
 }
 
 .pagination-button:disabled {
@@ -443,6 +536,26 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     align-items: center;
     padding: 0 8px;
     color: #94a3b8;
+}
+
+.empty-history {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    color: #888;
+    font-size: 16px;
+}
+
+.empty-history i {
+    font-size: 48px;
+    margin-bottom: 20px;
+    color: #ccc;
+}
+
+.empty-history p {
+    margin: 0;
 }
 
 div::-webkit-scrollbar {

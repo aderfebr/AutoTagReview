@@ -13,3 +13,4 @@ class Taghistory(Document):
     textrank = StringField()
     llm_wo = StringField()
     llm_w = StringField()
+    time = StringField()

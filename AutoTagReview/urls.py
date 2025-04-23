@@ -21,6 +21,6 @@ from app import views
 urlpatterns = [
     path("api/review/", views.review),
     path("api/compare/", views.compare),
-    path("api/spider/", views.spider),
     path("api/taghistory/", views.taghistory),
+    path("api/taghistory/clear/", views.cleartaghistory),
 ]

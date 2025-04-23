@@ -11,9 +11,9 @@ const router = createRouter({
     routes:[
         { path: '/', component: ()=> import('./components/Data.vue') },
         { path: '/data/review', component: ()=> import('./components/Review.vue') },
-        { path: '/tag/compare', component: ()=> import('./components/Compare.vue') },
+        { path: '/tag/single', component: ()=> import('./components/Single.vue') },
         { path: '/tag/batch', component: ()=> import('./components/Batch.vue') },
-        { path: '/tag/spider', component: ()=> import('./components/Spider.vue') },
+        { path: '/tag/file', component: ()=> import('./components/File.vue') },
         { path: '/tag/history', component: ()=> import('./components/TagHistory.vue') },
     ]
 })

@@ -12,10 +12,10 @@
     <div id="right">
       <div class="content-section input-section">
         <div id="input-container">
-          <h3><i class="fa fa-comment"></i> 输入评论</h3>
+          <h3><i class="fa fa-edit"></i> 输入评论</h3>
           <textarea 
             v-model="userInput" 
-            placeholder="请输入要分析的评论内容..."
+            placeholder="请输入要分析的评论内容"
             rows="4"
           ></textarea>
           <div class="batch-actions">
@@ -257,11 +257,12 @@ body {
 #page-title {
   grid-area: header;
   position: static;
-  background: linear-gradient(135deg,rgba(0, 139, 189, 0.7),rgba(80, 0, 192, 0.7));
+  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
   color: white;
   padding: 20px 0;
   text-align: center;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 #page-title h1 {
