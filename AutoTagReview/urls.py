@@ -19,8 +19,9 @@ from django.urls import path
 from app import views
 
 urlpatterns = [
+    path("api/product/", views.product),
     path("api/review/", views.review),
-    path("api/compare/", views.compare),
+    path("api/tag/", views.tag),
     path("api/taghistory/", views.taghistory),
     path("api/taghistory/clear/", views.cleartaghistory),
 ]

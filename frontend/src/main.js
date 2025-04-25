@@ -10,6 +10,7 @@ const router = createRouter({
     history: createWebHashHistory(),
     routes:[
         { path: '/', component: ()=> import('./components/Data.vue') },
+        { path: '/data/product', component: ()=> import('./components/Product.vue') },
         { path: '/data/review', component: ()=> import('./components/Review.vue') },
         { path: '/tag/single', component: ()=> import('./components/Single.vue') },
         { path: '/tag/batch', component: ()=> import('./components/Batch.vue') },

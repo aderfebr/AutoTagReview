@@ -1,5 +1,11 @@
 from mongoengine import Document, StringField, IntField
 
+class Product(Document):
+    category = StringField()
+    product_id = StringField()
+    title = StringField()
+    img = StringField()
+
 class Review(Document):
     product_id = StringField()
     review = StringField()

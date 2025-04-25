@@ -10,7 +10,7 @@ path1 = './app/AKE/qwen_sft'
 path2 = './app/AKE/Qwen2.5-0.5B-Instruct'
 
 from .models import Taghistory
-def compare(request):
+def tag(request):
     data = json.loads(request.body)
     input_text = data.get('input', '')
     
@@ -37,15 +37,51 @@ def compare(request):
 
     return StreamingHttpResponse(generate_stream(), content_type='application/json')
 
+from .models import Product
+def product(request):
+    page_number = request.GET.get('page', 1)
+    all = request.GET.get('all')
+    
+    if all:
+        products = Product.objects.all()
+    else:
+        type = request.GET.get('type')
+        query = request.GET.get('query')
+        if type=='product_id':
+            products = Product.objects.filter(product_id=query)
+        elif type=='title':
+            products = Product.objects.filter(title__icontains=query)
+        else :
+            products = Product.objects.filter(category__icontains=query)
+
+    paginator = Paginator(products, 12)
+    page_obj = paginator.get_page(page_number)
+    
+    response_data = {
+        'count': paginator.count,
+        'num_pages': paginator.num_pages,
+        'current_page': page_obj.number,
+        'results': [
+            {
+                'category': i.category,
+                'product_id': i.product_id,
+                'title': i.title,
+                'img': i.img,
+            } 
+            for i in page_obj
+        ]
+    }
+    return JsonResponse(response_data)
+
 from .models import Review
 def review(request):
-    product_id = request.GET.get('product_id')
     page_number = request.GET.get('page', 1)
     all = request.GET.get('all')
     
     if all:
         reviews = Review.objects.all()
     else:
+        product_id = request.GET.get('product_id')
         reviews = Review.objects.filter(product_id=product_id)
 
     paginator = Paginator(reviews, 10)

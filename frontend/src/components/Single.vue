@@ -151,7 +151,7 @@ const results = ref({
   llm_w: []
 });
 
-const route = useRoute();
+const route = useRoute()
 onMounted(() => {
   if (route.query.text) {
     userInput.value = decodeURIComponent(route.query.text);
@@ -177,7 +177,7 @@ const analyze = async () => {
   isLoading.value = true;
   
   try {
-    const response = await fetch('http://localhost:8000/api/compare/', {
+    const response = await fetch('http://localhost:8000/api/tag/', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({'input': userInput.value})

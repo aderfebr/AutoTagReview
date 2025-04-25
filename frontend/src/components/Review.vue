@@ -10,7 +10,7 @@
     </div>
     
     <div id="right">
-    <div class="content-section input-section">
+    <div class="content-section">
         <div id="input-container">
         <h3><i class="fa fa-search"></i> 查询评论</h3>
         <div class="search-container">
@@ -18,40 +18,40 @@
             type="text" 
             v-model="productId" 
             placeholder="请输入产品ID..."
-            @keyup.enter="fetchComments"
+            @keyup.enter="fetchReviews"
             >
-            <button id="search" @click="fetchComments" :disabled="isLoadingComments">
-            <i class="fa" :class="isLoadingComments ? 'fa-spinner fa-spin' : 'fa-search'"></i> 
-            {{ isLoadingComments ? '查询中...' : '查询评论' }}
+            <button id="search" @click="fetchReviews" :disabled="isLoadingReviews">
+            <i class="fa" :class="isLoadingReviews ? 'fa-spinner fa-spin' : 'fa-search'"></i> 
+            {{ isLoadingReviews ? '查询中...' : '查询评论' }}
             </button>
         </div>
         </div>
     </div>
     
-    <div class="content-section comments-section">
-        <div id="comments-header">
+    <div class="content-section reviews-section">
+        <div id="reviews-header">
             <h3><i class="fa fa-comments"></i> 评论列表</h3>
-            <div v-if="comments.length > 0" class="pagination-info">
+            <div v-if="reviews.length > 0" class="pagination-info">
                 共 {{ pagination.total }} 条评论，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
             </div>
         </div>
         
-        <div id="comments-container">
-            <div v-if="comments.length === 0" class="empty-comments">
-                <i class="fa fa-comment-slash"></i>
-                <p>暂无评论数据，请输入产品ID查询</p>
+        <div id="reviews-container">
+            <div v-if="reviews.length === 0" class="empty-reviews">
+                <i class="fa fa-review-slash"></i>
+                <p>暂无评论数据</p>
             </div>
             
             <div v-else>
-                <div class="comment-list">
-                    <div v-for="(comment, index) in comments" :key="index" class="comment-item">
-                        <div class="comment-header">
-                            <span class="comment-user">{{ comment.nickname }}</span>
-                            <span class="comment-date">{{ comment.time }}</span>
+                <div class="review-list">
+                    <div v-for="(review, index) in reviews" :key="index" class="review-item">
+                        <div class="review-header">
+                            <span class="review-user">{{ review.nickname }}</span>
+                            <span class="review-date">{{ review.time }}</span>
                         </div>
-                        <div class="comment-content">{{ comment.review }}</div>
-                        <div class="comment-actions">
-                            <button class="analyze-btn" @click="analyzeComment(comment.review)">
+                        <div class="review-content">{{ review.review }}</div>
+                        <div class="review-actions">
+                            <button class="analyze-btn" @click="analyzeReview(review.review)">
                                 <i class="fa fa-tag"></i> 标签生成
                             </button>
                         </div>
@@ -101,20 +101,26 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Nav from './Nav.vue'
 
 const productId = ref('')
-const comments = ref([])
-const isLoadingComments = ref(false)
+const reviews = ref([])
+const isLoadingReviews = ref(false)
 const pagination = ref({
     total: 0,
     pages: 0,
     current: 1
 })
 
+const route = useRoute()
 onMounted(() => {
-  fetchComments();
+  if (route.query.id) {
+    productId.value = route.query.id
+    fetchReviews()
+  } else {
+    fetchReviews()
+  }
 })
 
 // 计算显示的页码范围
@@ -145,8 +151,8 @@ const showEllipsis = computed(() => {
            visiblePages.value[visiblePages.value.length - 1] < pagination.value.pages
 })
 
-const fetchComments = async () => {
-  isLoadingComments.value = true
+const fetchReviews = async () => {
+  isLoadingReviews.value = true
   try {
     const params = new URLSearchParams()
     params.append('page', pagination.value.current)
@@ -163,7 +169,7 @@ const fetchComments = async () => {
     }
     const data = await response.json()
     
-    comments.value = data.results
+    reviews.value = data.results
     pagination.value = {
       total: data.count,
       pages: data.num_pages,
@@ -174,7 +180,7 @@ const fetchComments = async () => {
     console.error('获取评论失败:', error)
     alert('获取评论失败，请稍后重试')
   } finally {
-    isLoadingComments.value = false
+    isLoadingReviews.value = false
   }
 }
 
@@ -184,17 +190,17 @@ const changePage = (page) => {
         return
     }
     pagination.value.current = page
-    fetchComments()
+    fetchReviews()
 }
 
 const router = useRouter()
-const analyzeComment = (comment) => {
-  const encodedComment = encodeURIComponent(comment)
+const analyzeReview = (review) => {
+  const encodedReview = encodeURIComponent(review)
   
   router.push({
-    path: '/tag/compare',
+    path: '/tag/single',
     query: {
-      text: encodedComment
+      text: encodedReview
     }
   })
 }
@@ -353,63 +359,63 @@ button:disabled {
 }
 
 /* 评论列表样式 */
-.comments-section {
+.reviews-section {
     background: rgba(240, 180, 210, 0.15);
 }
 
-#comments-header {
+#reviews-header {
   padding: 20px 25px 0;
 }
 
-#comments-header h3 {
+#reviews-header h3 {
   font-size: 18px;
   color: #4a6fa5;
   display: flex;
   align-items: center;
 }
 
-#comments-header h3 i {
+#reviews-header h3 i {
   margin-right: 10px;
 }
 
-.empty-comments {
+.empty-reviews {
   text-align: center;
   padding: 60px 20px;
   color: #64748b;
 }
 
-.empty-comments i {
+.empty-reviews i {
   font-size: 50px;
   margin-bottom: 15px;
   color: #cbd5e1;
 }
 
-.empty-comments p {
+.empty-reviews p {
   font-size: 16px;
   margin-top: 10px;
 }
 
-.comment-list {
+.review-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 0 25px 25px;
 }
 
-.comment-item {
+.review-item {
   border-radius: 10px;
   padding: 20px;
   transition: all 0.3s ease;
   border: 1px solid #f1f5f9;
 }
 
-.comment-item:hover {
+.review-item:hover {
 background-color: rgba(255, 255, 255, 0.3);
 transform: translateY(-2px);
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.comment-header {
+.review-header {
   display: flex;
   align-items: center;
   margin-bottom: 12px;
@@ -418,29 +424,29 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   gap: 15px;
 }
 
-.comment-user {
+.review-user {
   font-weight: 600;
   color: #1e293b;
 }
 
-.comment-rating {
+.review-rating {
   color: #f59e0b;
 }
 
-.comment-date {
+.review-date {
   margin-left: auto;
   color: #94a3b8;
   font-size: 13px;
 }
 
-.comment-content {
+.review-content {
   line-height: 1.7;
   margin-bottom: 15px;
   color: #334155;
   font-size: 15px;
 }
 
-.comment-actions {
+.review-actions {
   display: flex;
   justify-content: flex-end;
 }
