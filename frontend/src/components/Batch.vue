@@ -137,7 +137,7 @@ const analyzeBatch = async () => {
     batchResults.value = [];
     
     for (let i = 0; i < comments.length; i++) {
-      const response = await fetch('http://localhost:8000/api/compare/', {
+      const response = await fetch('http://localhost:8000/api/tag/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({'input': comments[i]})

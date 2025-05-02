@@ -2,12 +2,14 @@ import json
 from datetime import datetime
 from django.http import JsonResponse,HttpResponse,StreamingHttpResponse
 from django.core.paginator import Paginator
-from .AKE.predict_qwen import predict_qwen
+from bson import ObjectId
 from .AKE.AKE import tfidf,lda,textrank
+from .AKE.predict_qwen import predict_qwen
+from .AKE.visualize import visualize
 
 tokenizer_path = './app/AKE/Qwen2.5-0.5B-Instruct'
-path1 = './app/AKE/qwen_sft'
-path2 = './app/AKE/Qwen2.5-0.5B-Instruct'
+llm_w = './app/AKE/qwen_sft'
+llm_wo = './app/AKE/Qwen2.5-0.5B-Instruct'
 
 from .models import Taghistory
 def tag(request):
@@ -24,11 +26,11 @@ def tag(request):
         res3=textrank(input_text)
         yield json.dumps({'algorithm': 'textrank','result': res3}) + '\n'
 
-        res4 = predict_qwen(tokenizer_path, path2, input_text)
+        res4 = predict_qwen(tokenizer_path, llm_wo, input_text)
         res4 = res4.split("/")
         yield json.dumps({'algorithm': 'llm_wo','result': res4}) + '\n'
 
-        res5 = predict_qwen(tokenizer_path, path1, input_text)
+        res5 = predict_qwen(tokenizer_path, llm_w, input_text)
         res5 = res5.split("/")
         yield json.dumps({'algorithm': 'llm_w','result': res5}) + '\n'
 
@@ -117,6 +119,7 @@ def taghistory(request):
         'current_page': page_obj.number,
         'results': [
             {
+                'id': str(i.id),
                 'comment': i.comment,
                 'tfidf': i.tfidf.split('/'),
                 'lda': i.lda.split('/'),
@@ -136,3 +139,31 @@ def cleartaghistory(request):
         'status': 'success',
         'message': f'成功清空 {deleted_count} 条历史记录'
     }, status=200)
+
+def visualization(request):
+    id = request.GET.get('id')
+
+    history = Taghistory.objects.filter(id=ObjectId(id))[0]
+    phrases = {
+        'TF-IDF': history.tfidf.split('/'),
+        'LDA': history.lda.split('/'),
+        'TextRank': history.textrank.split('/'),
+        'LLM（无微调）': history.llm_wo.split('/'),
+        'LLM（微调）': history.llm_w.split('/'),
+    }
+
+    by_type, by_cluster = visualize(phrases)
+
+    response_data = {
+        'history': {
+        'comment': history.comment,
+        'tfidf': history.tfidf.split('/'),
+        'lda': history.lda.split('/'),
+        'textrank': history.textrank.split('/'),
+        'llm_wo': history.llm_wo.split('/'),
+        'llm_w': history.llm_w.split('/'),
+        },
+        'type': by_type, 
+        'cluster': by_cluster,
+    }
+    return JsonResponse(response_data)

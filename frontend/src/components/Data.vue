@@ -16,15 +16,8 @@
       
       <div class="content-section product-section">
         <div id="product-container">
-          <div id="product-image">
-            <img src="./1.jpg" alt="产品图片">
-          </div>
           <div id="product-details">
             <h2>牧马人 M6机甲可充电无线鼠标蓝牙双模静音游戏电竞外接电脑网吧笔记本电脑台式吃鸡竞技外设 M6机甲风【无线2.4G静音版】</h2>
-            <div id="product-thumbnails">
-              <img src="./2.jpg" alt="产品细节1">
-              <img src="./3.jpg" alt="产品细节2">
-            </div>
           </div>
         </div>
       </div>

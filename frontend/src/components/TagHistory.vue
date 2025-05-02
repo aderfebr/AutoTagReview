@@ -36,7 +36,12 @@
                         <div class="comment-section">
                             <div class="comment-label">评论内容：</div>
                             <div class="comment-content">{{ item.comment }}</div>
-                            <div class="time-section">{{ item.time }}</div>
+                            <div class="comment-footer">
+                                <button class="visualization-btn" @click="visualize(item.id)">
+                                    <i class="fa fa-tv"></i> 数据可视化
+                                </button>
+                                <div class="time-section">{{ item.time }}</div>
+                            </div>
                         </div>
                         <div class="history-divider"></div>
                         <div class="analysis-results">
@@ -131,6 +136,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import Nav from './Nav.vue'
 
 const history = ref([])
@@ -231,6 +237,18 @@ const changePage = (page) => {
     }
     pagination.value.current = page
     fetchHistory()
+}
+
+const router = useRouter()
+const visualize = (id) => {
+  const encodedReview = encodeURIComponent(id)
+  
+  router.push({
+    path: '/tag/visualization',
+    query: {
+      id: encodedReview
+    }
+  })
 }
 </script>
 
@@ -405,11 +423,31 @@ box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     color: #333;
 }
 
-.time-section {
+.comment-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     margin: 8px 0;
+}
+
+.visualization-btn {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  padding: 6px 14px;
+  font-size: 13px;
+  border-radius: 20px;
+}
+
+.visualization-btn:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+
+.visualization-btn i {
+  margin-right: 6px;
+  font-size: 12px;
+}
+
+.time-section {
     font-size: 13px;
     color: #888;
 }

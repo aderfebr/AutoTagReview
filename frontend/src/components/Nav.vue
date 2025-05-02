@@ -73,9 +73,6 @@
           <li :class="{ 'active-submenu': $route.path === '/tag/visualization' }">
             <router-link to="/tag/visualization">数据可视化</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/tag/recommendation' }">
-            <router-link to="/tag/recommendation">相关推荐</router-link>
-          </li>
         </ul>
       </li>
     </ul>

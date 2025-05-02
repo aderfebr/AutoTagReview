@@ -24,4 +24,5 @@ urlpatterns = [
     path("api/tag/", views.tag),
     path("api/taghistory/", views.taghistory),
     path("api/taghistory/clear/", views.cleartaghistory),
+    path("api/visualization/", views.visualization),
 ]
