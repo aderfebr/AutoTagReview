@@ -1,31 +1,16 @@
 <template>
   <div id="main">
-    <div id="page-title">
-      <h1>电商用户评论问题分类与标签自动生成系统</h1>
-      <div class="title-divider"></div>
-    </div>
+    <Title></Title>
+    <Nav></Nav>
 
-    <div id="left">
-      <Nav></Nav>
-    </div>
-    
     <div id="right">
       <div class="content-section input-section">
         <div id="input-container">
           <h3><i class="fa fa-edit"></i> 输入评论</h3>
-          <textarea 
-            v-model="userInput" 
-            placeholder="请输入要分析的评论内容"
-            rows="4"
-          ></textarea>
+          <textarea v-model="userInput" placeholder="请输入要分析的评论内容" rows="4"></textarea>
           <div class="batch-actions">
-            <button 
-              id="analyze" 
-              @click="analyze" 
-              :disabled="isLoading"
-              :class="{ 'loading': isLoading }"
-            >
-              <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i> 
+            <button id="analyze" @click="analyze" :disabled="isLoading" :class="{ 'loading': isLoading }">
+              <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i>
               {{ isLoading ? '分析中...' : '开始分析' }}
             </button>
             <div v-if="isLoading" class="progress-bar">
@@ -34,13 +19,13 @@
           </div>
         </div>
       </div>
-      
+
       <div class="content-section results-section">
         <div id="results-header">
           <h3><i class="fa fa-calculator"></i> 分析结果</h3>
           <div class="section-divider"></div>
         </div>
-        
+
         <div id="results-container">
           <!-- TF-IDF 算法结果 -->
           <div class="algorithm-card">
@@ -50,16 +35,16 @@
             </div>
             <div class="algorithm-result">
               <div v-if="results.tfidf.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in results.tfidf" :key="'tfidf-'+index" class="tag">{{ tag }}</span>
+                <span v-for="(tag, index) in results.tfidf" :key="'tfidf-' + index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
               </div>
             </div>
           </div>
-          
+
           <div class="algorithm-divider"></div>
-          
+
           <!-- LDA 算法结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
@@ -68,16 +53,16 @@
             </div>
             <div class="algorithm-result">
               <div v-if="results.lda.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in results.lda" :key="'lda-'+index" class="tag">{{ tag }}</span>
+                <span v-for="(tag, index) in results.lda" :key="'lda-' + index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
               </div>
             </div>
           </div>
-          
+
           <div class="algorithm-divider"></div>
-          
+
           <!-- TextRank 算法结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
@@ -86,16 +71,16 @@
             </div>
             <div class="algorithm-result">
               <div v-if="results.textrank.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in results.textrank" :key="'textrank-'+index" class="tag">{{ tag }}</span>
+                <span v-for="(tag, index) in results.textrank" :key="'textrank-' + index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
               </div>
             </div>
           </div>
-          
+
           <div class="algorithm-divider"></div>
-          
+
           <!-- 大模型（无微调）结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
@@ -104,16 +89,16 @@
             </div>
             <div class="algorithm-result">
               <div v-if="results.llm_wo.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in results.llm_wo" :key="'llmwo-'+index" class="tag">{{ tag }}</span>
+                <span v-for="(tag, index) in results.llm_wo" :key="'llmwo-' + index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
               </div>
             </div>
           </div>
-          
+
           <div class="algorithm-divider"></div>
-          
+
           <!-- 大模型（微调）结果 -->
           <div class="algorithm-card">
             <div class="algorithm-header">
@@ -122,7 +107,7 @@
             </div>
             <div class="algorithm-result">
               <div v-if="results.llm_w.length > 0" class="result-tags large">
-                <span v-for="(tag, index) in results.llm_w" :key="'llmw-'+index" class="tag">{{ tag }}</span>
+                <span v-for="(tag, index) in results.llm_w" :key="'llmw-' + index" class="tag">{{ tag }}</span>
               </div>
               <div v-else class="empty-state">
                 <i class="fa fa-info-circle"></i> 暂无标签数据
@@ -140,6 +125,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Nav from './Nav.vue';
+import Title from './Title.vue';
 
 const userInput = ref('');
 const isLoading = ref(false);
@@ -168,44 +154,44 @@ const analyze = async () => {
     llm_wo: [],
     llm_w: []
   };
-  
+
   if (!userInput.value.trim()) {
     alert('请输入评论内容');
     return;
   }
-  
+
   isLoading.value = true;
-  
+
   try {
     const response = await fetch('http://localhost:8000/api/tag/', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({'input': userInput.value})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 'input': userInput.value })
     });
-    
+
     if (!response.ok) throw new Error('服务器无响应');
-    
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      
+
       buffer += decoder.decode(value, { stream: true });
-      
+
       // 处理可能的多条消息
       let boundary;
       while ((boundary = buffer.indexOf('\n')) !== -1) {
         const message = buffer.slice(0, boundary);
         buffer = buffer.slice(boundary + 1);
-        
+
         if (message.trim() === '') continue;
-        
+
         try {
           const data = JSON.parse(message);
-          
+
           // 更新进度和结果
           if (data.algorithm) {
             if (data.result !== undefined) {
@@ -246,51 +232,12 @@ body {
 
 #main {
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "header header"
     "left right";
   grid-template-rows: auto 1fr;
   grid-template-columns: 220px 1fr;
   height: 100vh;
-}
-
-#page-title {
-  grid-area: header;
-  position: static;
-  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
-  color: white;
-  padding: 20px 0;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-#page-title h1 {
-  font-size: 30px;
-  margin: 0;
-  font-weight: 500;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-#page-title h1 i {
-  margin-right: 10px;
-}
-
-.title-divider {
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
-  margin: 8px auto 0;
-  width: 80%;
-}
-
-/* 左侧导航栏 */
-#left {
-  background: rgba(0, 120, 240, 0.15);
-  grid-area: left;
 }
 
 #right {
@@ -311,7 +258,7 @@ body {
   margin-left: auto;
   margin-right: auto;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 

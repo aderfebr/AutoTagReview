@@ -1,35 +1,21 @@
 <template>
   <div id="main">
-    <div id="page-title">
-      <h1>电商用户评论问题分类与标签自动生成系统</h1>
-      <div class="title-divider"></div>
-    </div>
+    <Title></Title>
+    <Nav></Nav>
 
-    <div id="left">
-      <Nav></Nav>
-    </div>
-    
     <div id="right">
       <div class="content-section input-section">
         <div id="input-container">
           <h3><i class="fa fa-edit"></i> 批量输入评论</h3>
-          
+
           <div class="text-input-area">
-            <textarea 
-              v-model="commentInput" 
-              placeholder="请输入多条评论，每条评论占一行"
-              rows="10"
-            ></textarea>
+            <textarea v-model="commentInput" placeholder="请输入多条评论，每条评论占一行" rows="10"></textarea>
           </div>
-          
+
           <div class="batch-actions">
-            <button 
-              id="analyze" 
-              @click="analyzeBatch" 
-              :disabled="isLoading || !commentInput.trim()"
-              :class="{ 'loading': isLoading }"
-            >
-              <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i> 
+            <button id="analyze" @click="analyzeBatch" :disabled="isLoading || !commentInput.trim()"
+              :class="{ 'loading': isLoading }">
+              <i class="fa" :class="isLoading ? 'fa-spinner fa-spin' : 'fa-play'"></i>
               {{ isLoading ? '分析中...' : '开始批量分析' }}
             </button>
             <div v-if="isLoading" class="progress-bar">
@@ -38,55 +24,55 @@
           </div>
         </div>
       </div>
-      
+
       <div class="content-section results-section">
         <div id="input-container">
           <h3><i class="fa fa-table"></i> 批量分析结果</h3>
-          
+
           <div v-if="batchResults.length > 0" class="results-container">
             <div v-if="isLoading" class="processing-indicator">
               <i class="fa fa-spinner fa-spin"></i>
               <span>正在分析第 {{ batchResults.length + 1 }} 条评论，共 {{ totalComments }} 条评论</span>
             </div>
-            
-            <div v-for="(result, index) in paginatedResults" :key="'result-'+index" class="result-item">
+
+            <div v-for="(result, index) in paginatedResults" :key="'result-' + index" class="result-item">
               <div class="comment-label">评论内容：</div>
               <div class="comment-content">{{ result.comment }}</div>
               <div class="tags-container">
-              <div class="tag-group">
-                <h4>TF-IDF 标签</h4>
-                <div class="tags-cell"><span v-for="tag in result.tfidf" class="tag">{{ tag }}</span></div>
-              </div>
-              <div class="tag-group">
-                <h4>LDA 标签</h4>
-                <div class="tags-cell"><span v-for="tag in result.lda" class="tag">{{ tag }}</span></div>
-              </div>
-              <div class="tag-group">
-                <h4>TextRank 标签</h4>
-                <div class="tags-cell"><span v-for="tag in result.textrank" class="tag">{{ tag }}</span></div>
-              </div>
-              <div class="tag-group">
-                <h4>大模型(无微调)标签</h4>
-                <div class="tags-cell"><span v-for="tag in result.llm_wo" class="tag">{{ tag }}</span></div>
-              </div>
-              <div class="tag-group">
-                <h4>大模型(微调)标签</h4>
-                <div class="tags-cell"><span v-for="tag in result.llm_w" class="tag">{{ tag }}</span></div>
-              </div>
+                <div class="tag-group">
+                  <h4>TF-IDF 标签</h4>
+                  <div class="tags-cell"><span v-for="tag in result.tfidf" class="tag">{{ tag }}</span></div>
+                </div>
+                <div class="tag-group">
+                  <h4>LDA 标签</h4>
+                  <div class="tags-cell"><span v-for="tag in result.lda" class="tag">{{ tag }}</span></div>
+                </div>
+                <div class="tag-group">
+                  <h4>TextRank 标签</h4>
+                  <div class="tags-cell"><span v-for="tag in result.textrank" class="tag">{{ tag }}</span></div>
+                </div>
+                <div class="tag-group">
+                  <h4>大模型(无微调)标签</h4>
+                  <div class="tags-cell"><span v-for="tag in result.llm_wo" class="tag">{{ tag }}</span></div>
+                </div>
+                <div class="tag-group">
+                  <h4>大模型(微调)标签</h4>
+                  <div class="tags-cell"><span v-for="tag in result.llm_w" class="tag">{{ tag }}</span></div>
+                </div>
               </div>
             </div>
           </div>
-          
+
           <div v-else-if="isLoading && batchResults.length === 0" class="processing-indicator first-item">
             <i class="fa fa-spinner fa-spin"></i>
             <span>正在分析第 1 条评论，共 {{ totalComments }} 条评论</span>
           </div>
-          
+
           <div v-else class="empty-state">
             <i class="fa fa-info-circle"></i>
             <p>请输入评论并开始分析</p>
           </div>
-          
+
           <div class="pagination-controls" v-if="batchResults.length > 0">
             <button @click="prevPage" :disabled="currentPage === 1">
               <i class="fa fa-chevron-left"></i>
@@ -105,6 +91,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import Nav from './Nav.vue';
+import Title from './Title.vue';
 
 const commentInput = ref('');
 const isLoading = ref(false);
@@ -117,38 +104,38 @@ const totalComments = ref(0);
 // 批量分析
 const analyzeBatch = async () => {
   if (!commentInput.value.trim()) return;
-  
+
   try {
     isLoading.value = true;
     progress.value = 0;
     analysisComplete.value = false;
-    currentPage.value = 1; 
-    
+    currentPage.value = 1;
+
     const comments = commentInput.value
       .split('\n')
       .map(line => line.trim())
       .filter(line => line);
-      
+
     totalComments.value = comments.length;
     if (comments.length === 0) {
       throw new Error('请输入有效的评论内容');
     }
-    
+
     batchResults.value = [];
-    
+
     for (let i = 0; i < comments.length; i++) {
       const response = await fetch('http://localhost:8000/api/tag/', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({'input': comments[i]})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 'input': comments[i] })
       });
-      
+
       if (!response.ok) throw new Error('服务器无响应');
-    
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-      
+
       const newResult = {
         comment: comments[i],
         tfidf: [],
@@ -157,27 +144,27 @@ const analyzeBatch = async () => {
         llm_wo: [],
         llm_w: []
       };
-      
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        
+
         buffer += decoder.decode(value, { stream: true });
-        
+
         let boundary;
         while ((boundary = buffer.indexOf('\n')) !== -1) {
           const message = buffer.slice(0, boundary);
           buffer = buffer.slice(boundary + 1);
-          
+
           if (message.trim() === '') continue;
-          
+
           try {
             const data = JSON.parse(message);
-            
+
             if (data.algorithm && data.result !== undefined) {
               const resultArray = Array.isArray(data.result) ? data.result : [data.result];
-              
-              switch(data.algorithm.toLowerCase()) {
+
+              switch (data.algorithm.toLowerCase()) {
                 case 'tfidf':
                   newResult.tfidf = resultArray;
                   break;
@@ -200,12 +187,12 @@ const analyzeBatch = async () => {
           }
         }
       }
-      
+
       batchResults.value.push(newResult);
-      
+
       progress.value = Math.round(((i + 1) / comments.length) * 100);
     }
-    
+
     analysisComplete.value = true;
   } catch (error) {
     console.error('分析失败:', error);
@@ -248,51 +235,12 @@ body {
 
 #main {
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "header header"
     "left right";
   grid-template-rows: auto 1fr;
   grid-template-columns: 220px 1fr;
   height: 100vh;
-}
-
-#page-title {
-  grid-area: header;
-  position: static;
-  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
-  color: white;
-  padding: 20px 0;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-#page-title h1 {
-  font-size: 30px;
-  margin: 0;
-  font-weight: 500;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-#page-title h1 i {
-  margin-right: 10px;
-}
-
-.title-divider {
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
-  margin: 8px auto 0;
-  width: 80%;
-}
-
-/* 左侧导航栏 */
-#left {
-  background: rgba(0, 120, 240, 0.15);
-  grid-area: left;
 }
 
 #right {
@@ -313,7 +261,7 @@ body {
   margin-left: auto;
   margin-right: auto;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
@@ -404,7 +352,7 @@ textarea:focus {
   background-color: rgba(255, 255, 255, 0.7);
   padding: 10px 15px;
   border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .file-details {
@@ -530,15 +478,15 @@ button:disabled {
 }
 
 .result-item {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.5);
   border-radius: 8px;
   padding: 20px;
 }
 
 .comment-label {
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 6px;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 6px;
 }
 
 .comment-content {
@@ -586,7 +534,7 @@ button:disabled {
   gap: 10px;
   color: #4a6fa5;
   padding: 15px;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   margin-top: 15px;
 }

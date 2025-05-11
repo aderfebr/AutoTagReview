@@ -1,18 +1,15 @@
 <template>
-  <div class="nav-container">
-    <ul class="main-menu">
+  <div class="container">
+    <ul class="mainmenu">
       <li :class="{ 'active-menu': $route.path === '/' }">
         <router-link to="/" class="menu-head">
-          <i class="fa fa-home"/>&ensp;首页
+          <i class="fa fa-home" />&ensp;首页
         </router-link>
       </li>
-      <li 
-        :class="{ 
-          'expanded': expandedMenu === 'data',
-          'active-menu': $route.path.startsWith('/data')
-        }" 
-        class="has-submenu"
-      >
+      <li :class="{
+        'expanded': expandedMenu === 'data',
+        'active-menu': $route.path.startsWith('/data')
+      }" class="has-submenu">
         <div class="menu-head" @click="toggleMenu('data')">
           <i class="fa fa-archive" />&ensp;数据展示
           <i class="fa fa-angle-down arrow" />
@@ -26,33 +23,30 @@
           </li>
         </ul>
       </li>
-      <li 
-        :class="{ 
-          'expanded': expandedMenu === 'label',
-          'active-menu': $route.path.startsWith('/label')
-        }" 
-        class="has-submenu"
-      >
+      <li :class="{
+        'expanded': expandedMenu === 'label',
+        'active-menu': $route.path.startsWith('/label')
+      }" class="has-submenu">
         <div class="menu-head" @click="toggleMenu('label')">
-          <i class="fa fa-search"/>&ensp;问题分类
+          <i class="fa fa-search" />&ensp;问题分类
           <i class="fa fa-angle-down arrow" />
         </div>
         <ul class="submenu">
           <li :class="{ 'active-submenu': $route.path === '/label/compare' }">
             <router-link to="/label/compare">算法比较</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/label/history' }">
-            <router-link to="/label/history">历史记录</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/label/profile' }">
+            <router-link to="/label/history">产品画像</router-link>
+          </li>
+          <li :class="{ 'active-submenu': $route.path === '/label/recommend' }">
+            <router-link to="/label/history">相关推荐</router-link>
           </li>
         </ul>
       </li>
-      <li 
-        :class="{ 
-          'expanded': expandedMenu === 'tag',
-          'active-menu': $route.path.startsWith('/tag')
-        }" 
-        class="has-submenu"
-      >
+      <li :class="{
+        'expanded': expandedMenu === 'tag',
+        'active-menu': $route.path.startsWith('/tag')
+      }" class="has-submenu">
         <div class="menu-head" @click="toggleMenu('tag')">
           <i class="fa fa-tag" />&ensp;标签生成
           <i class="fa fa-angle-down arrow" />
@@ -90,19 +84,24 @@ const toggleMenu = (menu) => {
 </script>
 
 <style scoped>
-.main-menu {
+.container {
+  background: rgba(0, 120, 240, 0.15);
+  grid-area: left;
+}
+
+.mainmenu {
   list-style: none;
   padding: 0;
   margin: 0;
   width: 100%;
 }
 
-.main-menu > li {
+.mainmenu>li {
   position: relative;
   width: 100%;
 }
 
-.main-menu > li > .menu-head {
+.mainmenu>li>.menu-head {
   color: #2c3e50;
   text-decoration: none;
   font-size: 18px;
@@ -116,12 +115,12 @@ const toggleMenu = (menu) => {
   position: relative;
 }
 
-.main-menu > li > .menu-head:hover {
+.mainmenu>li>.menu-head:hover {
   color: #1a73e8;
   background-color: #e1f5fe;
 }
 
-.main-menu > li > a.menu-head {
+.mainmenu>li>a.menu-head {
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -172,20 +171,22 @@ const toggleMenu = (menu) => {
 }
 
 /* Active menu styles */
-.main-menu > li.active-menu > .menu-head {
+.mainmenu>li.active-menu>.menu-head {
   border-left: 4px solid #1a73e8;
-  padding-left: 16px; /* Adjust padding to account for border */
+  padding-left: 16px;
+  /* Adjust padding to account for border */
   background-color: #e1f5fe;
   color: #1a73e8;
 }
 
-.main-menu > li.active-menu > .menu-head > i {
+.mainmenu>li.active-menu>.menu-head>i {
   color: #1a73e8;
 }
 
 .submenu li.active-submenu a {
   border-left: 4px solid #1a73e8;
-  padding-left: 46px; /* 50px - 4px border */
+  padding-left: 46px;
+  /* 50px - 4px border */
   background-color: #e1f5fe;
   color: #01579b;
   font-weight: 500;
@@ -198,8 +199,8 @@ i {
   color: #0288d1;
 }
 
-.main-menu > li > .menu-head:hover > i,
-.has-submenu.expanded > .menu-head > i {
+.mainmenu>li>.menu-head:hover>i,
+.has-submenu.expanded>.menu-head>i {
   color: #01579b;
 }
 </style>

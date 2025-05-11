@@ -9,15 +9,12 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 加载预训练的中文BERT模型和分词器
-model_name = "./app/AKE/bert-base-chinese"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-model.eval()
-
-def generate_embeddings(phrases):
+def generate_embeddings(model_path, phrases):
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModel.from_pretrained(model_path)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+    model.eval()
     embeddings = []
     for phrase in phrases:
         inputs = tokenizer(phrase, return_tensors="pt", padding=True, truncation=True).to(device)
@@ -30,14 +27,14 @@ def generate_embeddings(phrases):
     # L2标准化以优化余弦相似度计算
     return normalize(embeddings_matrix, norm='l2')
 
-def visualize(phrases):
+def visualize(model_path, phrases):
     matrix = []
     source = []
     for k, v in phrases.items():
         matrix += v
         source += [k] * len(v)
     
-    embeddings_matrix = generate_embeddings(matrix)
+    embeddings_matrix = generate_embeddings(model_path, matrix)
     
     # 使用DBSCAN进行聚类
     dbscan = DBSCAN(eps=0.65, min_samples=3)

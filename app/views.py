@@ -7,9 +7,10 @@ from .AKE.AKE import tfidf,lda,textrank
 from .AKE.predict_qwen import predict_qwen
 from .AKE.visualize import visualize
 
-tokenizer_path = './app/AKE/Qwen2.5-0.5B-Instruct'
-llm_w = './app/AKE/qwen_sft'
-llm_wo = './app/AKE/Qwen2.5-0.5B-Instruct'
+tokenizer_path = './app/models/Qwen2.5-0.5B-Instruct'
+llm_w = './app/models/qwen_sft'
+llm_wo = './app/models/Qwen2.5-0.5B-Instruct'
+bert_path = './app/models/bert-base-chinese'
 
 from .models import Taghistory
 def tag(request):
@@ -109,7 +110,7 @@ from .models import Taghistory
 def taghistory(request):
     page_number = request.GET.get('page', 1)
     
-    history = Taghistory.objects.all()
+    history = Taghistory.objects.all().order_by('-time')
     paginator = Paginator(history, 10)
     page_obj = paginator.get_page(page_number)
     
@@ -152,7 +153,7 @@ def visualization(request):
         'LLM（微调）': history.llm_w.split('/'),
     }
 
-    by_type, by_cluster = visualize(phrases)
+    by_type, by_cluster = visualize(bert_path,phrases)
 
     response_data = {
         'history': {

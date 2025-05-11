@@ -1,132 +1,111 @@
 <template>
   <div id="main">
-      <div id="page-title">
-      <h1>电商用户评论问题分类与标签自动生成系统</h1>
-      <div class="title-divider"></div>
-      </div>
-  
-      <div id="left">
-      <Nav></Nav>
-      </div>
-      
-      <div id="right">
+    <Title></Title>
+    <Nav></Nav>
+
+    <div id="right">
 
       <div class="content-section">
-      <div id="input-container">
+        <div id="input-container">
           <h3><i class="fa fa-search"></i> 查询产品</h3>
           <div class="search-container">
-              <select v-model="searchType" class="search-type-select">
-                  <option value="product_id">ID</option>
-                  <option value="title">名称</option>
-                  <option value="category">类别</option>
-              </select>
-              <input 
-                  type="text" 
-                  v-model="searchQuery" 
-                  :placeholder="placeholderText"
-                  @keyup.enter="fetchProducts"
-              >
-              <button id="search" @click="fetchProducts" :disabled="isLoadingProducts">
-                  <i class="fa" :class="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-search'"></i> 
-                  {{ isLoadingProducts ? '查询中...' : '查询产品' }}
-              </button>
+            <select v-model="searchType" class="search-type-select">
+              <option value="product_id">ID</option>
+              <option value="title">名称</option>
+              <option value="category">类别</option>
+            </select>
+            <input type="text" v-model="searchQuery" :placeholder="placeholderText" @keyup.enter="fetchProducts">
+            <button id="search" @click="fetchProducts" :disabled="isLoadingProducts">
+              <i class="fa" :class="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+              {{ isLoadingProducts ? '查询中...' : '查询产品' }}
+            </button>
           </div>
+        </div>
+      </div>
+      <div class="content-section">
+        <div id="products-header">
+          <h3><i class="fa fa-archive"></i> 产品列表</h3>
+          <div v-if="products.length > 0" class="pagination-info">
+            共 {{ pagination.total }} 个产品，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
+          </div>
+        </div>
+
+        <div id="products-container">
+          <div v-if="products.length === 0" class="empty-products">
+            <i class="fa fa-box-open"></i>
+            <p>暂无产品数据</p>
+          </div>
+
+          <div v-else>
+            <div class="product-grid">
+              <div v-for="(product, index) in products" :key="index" class="product-item">
+                <div class="product-image">
+                  <img :src="product.img" :alt="product.title">
+                </div>
+                <div class="product-info">
+                  <h4 class="product-name">{{ product.title }}</h4>
+
+                  <div class="product-id-row">
+                    <span class="product-id-label">ID:</span>
+                    <span class="product-id-value">{{ product.product_id }}</span>
+                  </div>
+
+                  <div class="product-category-row">
+                    <span class="product-category-label">类别:</span>
+                    <span class="product-category-value">{{ product.category }}</span>
+                  </div>
+                </div>
+                <div class="product-actions">
+                  <button class="analyze-btn" @click="checkReview(product.product_id)">
+                    <i class="fa fa-comments"></i> 查看评论
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 分页器 -->
+            <div class="pagination-container">
+              <button @click="changePage(pagination.current - 1)" :disabled="pagination.current === 1"
+                class="pagination-button">
+                <i class="fa fa-chevron-left"></i> 上一页
+              </button>
+
+              <div class="page-numbers-wrapper">
+                <div class="page-numbers">
+                  <button v-for="page in visiblePages" :key="page" @click="changePage(page)"
+                    :class="{ active: page === pagination.current }" class="page-number">
+                    {{ page }}
+                  </button>
+                  <span v-if="showEllipsis" class="ellipsis">...</span>
+                </div>
+              </div>
+
+              <button @click="changePage(pagination.current + 1)" :disabled="pagination.current === pagination.pages"
+                class="pagination-button">
+                下一页 <i class="fa fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-      <div class="content-section">
-          <div id="products-header">
-              <h3><i class="fa fa-archive"></i> 产品列表</h3>
-              <div v-if="products.length > 0" class="pagination-info">
-                  共 {{ pagination.total }} 个产品，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
-              </div>
-          </div>
-          
-          <div id="products-container">
-              <div v-if="products.length === 0" class="empty-products">
-                  <i class="fa fa-box-open"></i>
-                  <p>暂无产品数据</p>
-              </div>
-              
-              <div v-else>
-                  <div class="product-grid">
-                      <div v-for="(product, index) in products" :key="index" class="product-item">
-                          <div class="product-image">
-                              <img :src="product.img" :alt="product.title">
-                          </div>
-                          <div class="product-info">
-                            <h4 class="product-name">{{ product.title }}</h4>
-                            
-                            <div class="product-id-row">
-                              <span class="product-id-label">ID:</span>
-                              <span class="product-id-value">{{ product.product_id }}</span>
-                            </div>
-                            
-                            <div class="product-category-row">
-                              <span class="product-category-label">类别:</span>
-                              <span class="product-category-value">{{ product.category }}</span>
-                            </div>
-                          </div>
-                          <div class="product-actions">
-                              <button class="analyze-btn" @click="checkReview(product.product_id)">
-                                  <i class="fa fa-comments"></i> 查看评论
-                              </button>
-                          </div>
-                      </div>
-                  </div>
-                  
-                  <!-- 分页器 -->
-                  <div class="pagination-container">
-                      <button 
-                      @click="changePage(pagination.current - 1)"
-                      :disabled="pagination.current === 1"
-                      class="pagination-button"
-                      >
-                      <i class="fa fa-chevron-left"></i> 上一页
-                      </button>
-                      
-                      <div class="page-numbers-wrapper">
-                          <div class="page-numbers">
-                              <button
-                              v-for="page in visiblePages"
-                              :key="page"
-                              @click="changePage(page)"
-                              :class="{ active: page === pagination.current }"
-                              class="page-number"
-                              >
-                              {{ page }}
-                              </button>
-                              <span v-if="showEllipsis" class="ellipsis">...</span>
-                          </div>
-                      </div>
-                      
-                      <button 
-                      @click="changePage(pagination.current + 1)"
-                      :disabled="pagination.current === pagination.pages"
-                      class="pagination-button"
-                      >
-                      下一页 <i class="fa fa-chevron-right"></i>
-                      </button>
-                  </div>
-              </div>
-          </div>
-      </div>
-      </div>
   </div>
-  </template>
+</template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import Nav from './Nav.vue'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import Nav from './Nav.vue';
+import Title from './Title.vue';
 
 const searchType = ref('title')
 const searchQuery = ref('')
 const products = ref([])
 const isLoadingProducts = ref(false)
 const pagination = ref({
-    total: 0,
-    pages: 0,
-    current: 1
+  total: 0,
+  pages: 0,
+  current: 1
 })
 
 onMounted(() => {
@@ -135,30 +114,30 @@ onMounted(() => {
 
 // 计算显示的页码范围
 const visiblePages = computed(() => {
-    const current = pagination.value.current
-    const totalPages = pagination.value.pages
-    const range = 2 
-    let start = Math.max(1, current - range)
-    let end = Math.min(totalPages, current + range)
-    
-    if (current <= range + 1) {
-        end = Math.min(2 * range + 1, totalPages)
-    }
-    if (current >= totalPages - range) {
-        start = Math.max(1, totalPages - 2 * range)
-    }
-    
-    const pages = []
-    for (let i = start; i <= end; i++) {
-        pages.push(i)
-    }
-    return pages
+  const current = pagination.value.current
+  const totalPages = pagination.value.pages
+  const range = 2
+  let start = Math.max(1, current - range)
+  let end = Math.min(totalPages, current + range)
+
+  if (current <= range + 1) {
+    end = Math.min(2 * range + 1, totalPages)
+  }
+  if (current >= totalPages - range) {
+    start = Math.max(1, totalPages - 2 * range)
+  }
+
+  const pages = []
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
 })
 
 // 是否显示省略号
 const showEllipsis = computed(() => {
-    return pagination.value.pages > visiblePages.value.length && 
-           visiblePages.value[visiblePages.value.length - 1] < pagination.value.pages
+  return pagination.value.pages > visiblePages.value.length &&
+    visiblePages.value[visiblePages.value.length - 1] < pagination.value.pages
 })
 
 const fetchProducts = async () => {
@@ -166,27 +145,27 @@ const fetchProducts = async () => {
   try {
     const params = new URLSearchParams()
     params.append('page', pagination.value.current)
-    
+
     if (searchQuery.value.trim()) {
       params.append('type', searchType.value.trim())
       params.append('query', searchQuery.value.trim())
     } else {
       params.append('all', 'true')
     }
-    
+
     const response = await fetch(`http://localhost:8000/api/product/?${params.toString()}`)
     if (!response.ok) {
       throw new Error('获取产品失败')
     }
     const data = await response.json()
-    
+
     products.value = data.results
     pagination.value = {
       total: data.count,
       pages: data.num_pages,
       current: data.current_page
     }
-    
+
   } catch (error) {
     console.error('获取产品失败:', error)
     alert('获取产品失败，请稍后重试')
@@ -197,17 +176,17 @@ const fetchProducts = async () => {
 
 // 切换页码
 const changePage = (page) => {
-    if (page < 1 || page > pagination.value.pages || page === pagination.value.current) {
-        return
-    }
-    pagination.value.current = page
-    fetchProducts()
+  if (page < 1 || page > pagination.value.pages || page === pagination.value.current) {
+    return
+  }
+  pagination.value.current = page
+  fetchProducts()
 }
 
 const router = useRouter()
 const checkReview = (product) => {
   const encodedProduct = encodeURIComponent(product)
-  
+
   router.push({
     path: '/data/review',
     query: {
@@ -233,51 +212,12 @@ body {
 
 #main {
   display: grid;
-  grid-template-areas: 
+  grid-template-areas:
     "header header"
     "left right";
   grid-template-rows: auto 1fr;
   grid-template-columns: 220px 1fr;
   height: 100vh;
-}
-
-#page-title {
-  grid-area: header;
-  position: static;
-  background: linear-gradient(135deg,rgb(40, 198, 255),rgb(134, 47, 255));
-  color: white;
-  padding: 20px 0;
-  text-align: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-#page-title h1 {
-  font-size: 30px;
-  margin: 0;
-  font-weight: 500;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-#page-title h1 i {
-  margin-right: 10px;
-}
-
-.title-divider {
-  height: 2px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
-  margin: 8px auto 0;
-  width: 80%;
-}
-
-/* 左右区域样式 */
-#left {
-  grid-area: left;
-  background: rgba(0, 120, 240, 0.15);
 }
 
 #right {
@@ -298,14 +238,14 @@ body {
   margin-left: auto;
   margin-right: auto;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transform: translateY(-2px);
 }
 
 /* 输入区域样式 */
 #input-container {
-    background: rgba(180, 210, 240, 0.15);
-    padding: 30px;
+  background: rgba(180, 210, 240, 0.15);
+  padding: 30px;
 }
 
 #input-container h3 {
@@ -449,7 +389,7 @@ body {
 .product-image {
   position: relative;
   width: 100%;
-  padding-top: 100%; 
+  padding-top: 100%;
   overflow: hidden;
   background: #f8fafc;
 }
@@ -460,12 +400,12 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; 
+  object-fit: cover;
   transition: transform 0.3s ease;
 }
 
 .product-item:hover .product-image img {
-  transform: scale(1.03); 
+  transform: scale(1.03);
 }
 
 /* 产品信息 */
@@ -574,74 +514,74 @@ button:disabled {
 }
 
 .pagination-info {
-    margin: 10px 0;
-    font-size: 14px;
-    color: #64748b;
+  margin: 10px 0;
+  font-size: 14px;
+  color: #64748b;
 }
 
 .pagination-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px 0;
-    gap: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+  gap: 10px;
 }
 
 .pagination-button {
-    padding: 8px 16px;
-    background-color: #f1f5f9;
-    color: #4a6fa5;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    transition: all 0.3s ease;
+  padding: 8px 16px;
+  background-color: #f1f5f9;
+  color: #4a6fa5;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
 .pagination-button:hover:not(:disabled) {
-    background-color: #e2e8f0;
+  background-color: #e2e8f0;
 }
 
 .pagination-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .page-numbers {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 /* 页码按钮样式 */
 .page-number {
-    min-width: 36px;
-    height: 36px;
-    padding: 0 8px;
-    background-color: #f1f5f9;
-    color: #4a6fa5;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  background-color: #f1f5f9;
+  color: #4a6fa5;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .page-number:hover {
-    background-color: #e2e8f0;
+  background-color: #e2e8f0;
 }
 
 .page-number.active {
-    background-color: #4a6fa5;
-    color: white;
-    border-color: #4a6fa5;
+  background-color: #4a6fa5;
+  color: white;
+  border-color: #4a6fa5;
 }
 
 .ellipsis {
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    color: #94a3b8;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  color: #94a3b8;
 }
 
 div::-webkit-scrollbar {
