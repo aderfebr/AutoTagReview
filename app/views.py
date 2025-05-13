@@ -3,44 +3,23 @@ from datetime import datetime
 from django.http import JsonResponse,HttpResponse,StreamingHttpResponse
 from django.core.paginator import Paginator
 from bson import ObjectId
+from .MLTC.predict_bert import predict_bert
 from .AKE.AKE import tfidf,lda,textrank
 from .AKE.predict_qwen import predict_qwen
 from .AKE.visualize import visualize
+
+from .models import Product
+from .models import Review
+from .models import Taghistory
 
 tokenizer_path = './app/models/Qwen2.5-0.5B-Instruct'
 llm_w = './app/models/qwen_sft'
 llm_wo = './app/models/Qwen2.5-0.5B-Instruct'
 bert_path = './app/models/bert-base-chinese'
+label_w = './app/models/label_w'
+label_wo = './app/models/label_wo'
+label_map = './app/models/label_map.json'
 
-from .models import Taghistory
-def tag(request):
-    data = json.loads(request.body)
-    input_text = data.get('input', '')
-    
-    def generate_stream():
-        res1=tfidf(input_text)
-        yield json.dumps({'algorithm': 'tfidf','result': res1}) + '\n'
-
-        res2=lda(input_text)
-        yield json.dumps({'algorithm': 'lda','result': res2}) + '\n'
-
-        res3=textrank(input_text)
-        yield json.dumps({'algorithm': 'textrank','result': res3}) + '\n'
-
-        res4 = predict_qwen(tokenizer_path, llm_wo, input_text)
-        res4 = res4.split("/")
-        yield json.dumps({'algorithm': 'llm_wo','result': res4}) + '\n'
-
-        res5 = predict_qwen(tokenizer_path, llm_w, input_text)
-        res5 = res5.split("/")
-        yield json.dumps({'algorithm': 'llm_w','result': res5}) + '\n'
-
-        tag = Taghistory(comment=input_text,tfidf='/'.join(res1),lda='/'.join(res2),textrank='/'.join(res3),llm_wo='/'.join(res4),llm_w='/'.join(res5),time=str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-        tag.save()
-
-    return StreamingHttpResponse(generate_stream(), content_type='application/json')
-
-from .models import Product
 def product(request):
     page_number = request.GET.get('page', 1)
     all = request.GET.get('all')
@@ -76,7 +55,6 @@ def product(request):
     }
     return JsonResponse(response_data)
 
-from .models import Review
 def review(request):
     page_number = request.GET.get('page', 1)
     all = request.GET.get('all')
@@ -106,7 +84,52 @@ def review(request):
     }
     return JsonResponse(response_data)
 
-from .models import Taghistory
+def compare(request):
+    data = json.loads(request.body)
+    input_text = data.get('input', '')
+    res1 = predict_bert(label_wo, label_map, input_text)
+    res1_sorted = sorted(res1, key=lambda x: x[1], reverse=True)
+    res2 = predict_bert(label_w, label_map, input_text)
+    res2_sorted = sorted(res2, key=lambda x: x[1], reverse=True)
+    response_data = {
+        'label_wo':{
+            'labels': [item[0] for item in res1_sorted[:5]],
+            'probs': [item[1] for item in res1_sorted[:5]]
+        },
+        'label_w':{
+            'labels': [item[0] for item in res2_sorted[:5]],
+            'probs': [item[1] for item in res2_sorted[:5]]
+        }
+    }
+    return JsonResponse(response_data)
+
+def tag(request):
+    data = json.loads(request.body)
+    input_text = data.get('input', '')
+    
+    def generate_stream():
+        res1=tfidf(input_text)
+        yield json.dumps({'algorithm': 'tfidf','result': res1}) + '\n'
+
+        res2=lda(input_text)
+        yield json.dumps({'algorithm': 'lda','result': res2}) + '\n'
+
+        res3=textrank(input_text)
+        yield json.dumps({'algorithm': 'textrank','result': res3}) + '\n'
+
+        res4 = predict_qwen(tokenizer_path, llm_wo, input_text)
+        res4 = res4.split("/")
+        yield json.dumps({'algorithm': 'llm_wo','result': res4}) + '\n'
+
+        res5 = predict_qwen(tokenizer_path, llm_w, input_text)
+        res5 = res5.split("/")
+        yield json.dumps({'algorithm': 'llm_w','result': res5}) + '\n'
+
+        tag = Taghistory(comment=input_text,tfidf='/'.join(res1),lda='/'.join(res2),textrank='/'.join(res3),llm_wo='/'.join(res4),llm_w='/'.join(res5),time=str(datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        tag.save()
+
+    return StreamingHttpResponse(generate_stream(), content_type='application/json')
+
 def taghistory(request):
     page_number = request.GET.get('page', 1)
     

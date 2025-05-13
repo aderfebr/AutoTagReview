@@ -24,22 +24,22 @@
         </ul>
       </li>
       <li :class="{
-        'expanded': expandedMenu === 'label',
-        'active-menu': $route.path.startsWith('/label')
+        'expanded': expandedMenu === 'classification',
+        'active-menu': $route.path.startsWith('/classification')
       }" class="has-submenu">
-        <div class="menu-head" @click="toggleMenu('label')">
+        <div class="menu-head" @click="toggleMenu('classification')">
           <i class="fa fa-search" />&ensp;问题分类
           <i class="fa fa-angle-down arrow" />
         </div>
         <ul class="submenu">
-          <li :class="{ 'active-submenu': $route.path === '/label/compare' }">
-            <router-link to="/label/compare">算法比较</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/classification/compare' }">
+            <router-link to="/classification/compare">算法比较</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/label/profile' }">
-            <router-link to="/label/history">产品画像</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/classification/profile' }">
+            <router-link to="/classification/profile">产品画像</router-link>
           </li>
-          <li :class="{ 'active-submenu': $route.path === '/label/recommend' }">
-            <router-link to="/label/history">相关推荐</router-link>
+          <li :class="{ 'active-submenu': $route.path === '/classification/recommend' }">
+            <router-link to="/classification/recommend">相关推荐</router-link>
           </li>
         </ul>
       </li>

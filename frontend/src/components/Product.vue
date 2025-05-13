@@ -59,6 +59,9 @@
                   <button class="analyze-btn" @click="checkReview(product.product_id)">
                     <i class="fa fa-comments"></i> 查看评论
                   </button>
+                  <button class="analyze-btn" @click="checkProfile(product.product_id)">
+                    <i class="fa fa-id-card"></i> 查看画像
+                  </button>
                 </div>
               </div>
             </div>
@@ -106,6 +109,16 @@ const pagination = ref({
   total: 0,
   pages: 0,
   current: 1
+})
+
+const placeholderMap = {
+  product_id: '请输入产品ID...',
+  title: '请输入产品名称关键词...',
+  category: '请输入产品类别关键词...'
+}
+
+const placeholderText = computed(() => {
+  return placeholderMap[searchType.value]
 })
 
 onMounted(() => {
@@ -189,6 +202,17 @@ const checkReview = (product) => {
 
   router.push({
     path: '/data/review',
+    query: {
+      id: encodedProduct
+    }
+  })
+}
+
+const checkProfile = (product) => {
+  const encodedProduct = encodeURIComponent(product)
+
+  router.push({
+    path: '/classification/profile',
     query: {
       id: encodedProduct
     }
@@ -502,6 +526,7 @@ button:disabled {
   padding: 6px 14px;
   font-size: 13px;
   border-radius: 20px;
+  margin-left: 10px;
 }
 
 .analyze-btn:hover {

@@ -4,47 +4,58 @@
     <Nav></Nav>
 
     <div id="right">
+
       <div class="content-section">
         <div id="input-container">
-          <h3><i class="fa fa-search"></i> 查询评论</h3>
+          <h3><i class="fa fa-search"></i> 查询分类</h3>
           <div class="search-container">
-            <input type="text" v-model="productId" placeholder="请输入产品ID..." @keyup.enter="fetchReviews">
-            <button id="search" @click="fetchReviews" :disabled="isLoadingReviews">
-              <i class="fa" :class="isLoadingReviews ? 'fa-spinner fa-spin' : 'fa-search'"></i>
-              {{ isLoadingReviews ? '查询中...' : '查询评论' }}
+            <input type="text" v-model="searchQuery" placeholder="请输入问题类别..." @keyup.enter="fetchProducts">
+            <button id="search" @click="fetchProducts" :disabled="isLoadingProducts">
+              <i class="fa" :class="isLoadingProducts ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+              {{ isLoadingProducts ? '查询中...' : '查询分类' }}
             </button>
           </div>
         </div>
       </div>
-
-      <div class="content-section reviews-section">
-        <div id="reviews-header">
-          <h3><i class="fa fa-comments"></i> 评论列表</h3>
-          <div v-if="reviews.length > 0" class="pagination-info">
-            共 {{ pagination.total }} 条评论，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
+      <div class="content-section">
+        <div id="products-header">
+          <h3><i class="fa fa-archive"></i> 推荐结果</h3>
+          <div v-if="products.length > 0" class="pagination-info">
+            共 {{ pagination.total }} 个产品，第 {{ pagination.current }} 页/共 {{ pagination.pages }} 页
           </div>
         </div>
 
-        <div id="reviews-container">
-          <div v-if="reviews.length === 0" class="empty-reviews">
-            <i class="fa fa-review-slash"></i>
-            <p>暂无评论数据</p>
+        <div id="products-container">
+          <div v-if="products.length === 0" class="empty-products">
+            <i class="fa fa-box-open"></i>
+            <p>暂无产品数据</p>
           </div>
 
           <div v-else>
-            <div class="review-list">
-              <div v-for="(review, index) in reviews" :key="index" class="review-item">
-                <div class="review-header">
-                  <span class="review-user">{{ review.nickname }}</span>
-                  <span class="review-date">{{ review.time }}</span>
+            <div class="product-grid">
+              <div v-for="(product, index) in products" :key="index" class="product-item">
+                <div class="product-image">
+                  <img :src="product.img" :alt="product.title">
                 </div>
-                <div class="review-content">{{ review.review }}</div>
-                <div class="review-actions">
-                  <button class="analyze-btn" @click="analyzeClassification(review.review)">
-                    <i class="fa fa-search"></i> 问题分类
+                <div class="product-info">
+                  <h4 class="product-name">{{ product.title }}</h4>
+
+                  <div class="product-id-row">
+                    <span class="product-id-label">ID:</span>
+                    <span class="product-id-value">{{ product.product_id }}</span>
+                  </div>
+
+                  <div class="product-category-row">
+                    <span class="product-category-label">类别:</span>
+                    <span class="product-category-value">{{ product.category }}</span>
+                  </div>
+                </div>
+                <div class="product-actions">
+                  <button class="analyze-btn" @click="checkReview(product.product_id)">
+                    <i class="fa fa-comments"></i> 查看评论
                   </button>
-                  <button class="analyze-btn" @click="analyzeReview(review.review)">
-                    <i class="fa fa-tag"></i> 标签生成
+                  <button class="analyze-btn" @click="checkProfile(product.product_id)">
+                    <i class="fa fa-id-card"></i> 查看画像
                   </button>
                 </div>
               </div>
@@ -75,34 +86,27 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
 import Nav from './Nav.vue';
 import Title from './Title.vue';
 
-const productId = ref('')
-const reviews = ref([])
-const isLoadingReviews = ref(false)
+const searchQuery = ref('')
+const products = ref([])
+const isLoadingProducts = ref(false)
 const pagination = ref({
   total: 0,
   pages: 0,
   current: 1
 })
 
-const route = useRoute()
 onMounted(() => {
-  if (route.query.id) {
-    productId.value = route.query.id
-    fetchReviews()
-  } else {
-    fetchReviews()
-  }
+  // fetchProducts();
 })
 
 // 计算显示的页码范围
@@ -133,25 +137,23 @@ const showEllipsis = computed(() => {
     visiblePages.value[visiblePages.value.length - 1] < pagination.value.pages
 })
 
-const fetchReviews = async () => {
-  isLoadingReviews.value = true
+const fetchProducts = async () => {
+  isLoadingProducts.value = true
   try {
     const params = new URLSearchParams()
     params.append('page', pagination.value.current)
 
-    if (productId.value.trim()) {
-      params.append('product_id', productId.value.trim())
-    } else {
-      params.append('all', 'true')
+    if (searchQuery.value.trim()) {
+      params.append('query', searchQuery.value.trim())
     }
 
-    const response = await fetch(`http://localhost:8000/api/review/?${params.toString()}`)
+    const response = await fetch(`http://localhost:8000/api/product/?${params.toString()}`)
     if (!response.ok) {
-      throw new Error('获取评论失败')
+      throw new Error('获取产品失败')
     }
     const data = await response.json()
 
-    reviews.value = data.results
+    products.value = data.results
     pagination.value = {
       total: data.count,
       pages: data.num_pages,
@@ -159,10 +161,10 @@ const fetchReviews = async () => {
     }
 
   } catch (error) {
-    console.error('获取评论失败:', error)
-    alert('获取评论失败，请稍后重试')
+    console.error('获取产品失败:', error)
+    alert('获取产品失败，请稍后重试')
   } finally {
-    isLoadingReviews.value = false
+    isLoadingProducts.value = false
   }
 }
 
@@ -172,25 +174,28 @@ const changePage = (page) => {
     return
   }
   pagination.value.current = page
-  fetchReviews()
+  fetchProducts()
 }
 
 const router = useRouter()
-const analyzeClassification = (review) => {
-  const encodedReview = encodeURIComponent(review)
+const checkReview = (product) => {
+  const encodedProduct = encodeURIComponent(product)
+
   router.push({
-    path: '/label/compare',
+    path: '/data/review',
     query: {
-      text: encodedReview
+      id: encodedProduct
     }
   })
 }
-const analyzeReview = (review) => {
-  const encodedReview = encodeURIComponent(review)
+
+const checkProfile = (product) => {
+  const encodedProduct = encodeURIComponent(product)
+
   router.push({
-    path: '/tag/single',
+    path: '/classification/profile',
     query: {
-      text: encodedReview
+      id: encodedProduct
     }
   })
 }
@@ -260,24 +265,211 @@ body {
   margin-right: 10px;
 }
 
+/* 搜索容器样式 */
 .search-container {
   display: flex;
   gap: 10px;
 }
 
+/* 搜索类型选择框 */
+.search-type-select {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 15px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px;
+  padding-right: 30px;
+}
+
+.search-type-select:focus {
+  outline: none;
+  border-color: #4a6fa5;
+  box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.1);
+}
+
+/* 搜索输入框 */
 .search-container input {
   flex: 1;
-  padding: 12px 15px;
+  padding: 10px 15px;
   border-radius: 6px;
   border: 1px solid #e2e8f0;
   font-size: 15px;
   transition: all 0.3s ease;
+  min-width: 200px;
 }
 
 .search-container input:focus {
   outline: none;
   border-color: #4a6fa5;
   box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.1);
+}
+
+#products-header {
+  padding: 20px 25px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: rgba(240, 180, 210, 0.15);
+  backdrop-filter: blur(5px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+#products-header h3 {
+  font-size: 18px;
+  color: #4a6fa5;
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+#products-header h3 i {
+  margin-right: 10px;
+}
+
+/* 产品容器样式 */
+#products-container {
+  background: rgba(240, 180, 210, 0.15);
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+/* 空状态样式 */
+.empty-products {
+  text-align: center;
+  padding: 60px 20px;
+  color: #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-products i {
+  font-size: 50px;
+  margin-bottom: 15px;
+  color: #cbd5e1;
+}
+
+.empty-products p {
+  font-size: 16px;
+  margin-top: 10px;
+  color: #94a3b8;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 24px;
+  padding: 20px;
+}
+
+/* 产品卡片样式 */
+.product-item {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* 产品图片 */
+.product-image {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.product-image img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-item:hover .product-image img {
+  transform: scale(1.03);
+}
+
+/* 产品信息 */
+.product-info {
+  padding: 16px;
+  flex-grow: 1;
+}
+
+.product-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+
+/* ID行样式 */
+.product-id-row {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+/* 类别行样式 */
+.product-category-row {
+  display: flex;
+  align-items: center;
+}
+
+/* 统一标签样式 */
+.product-id-label,
+.product-category-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-right: 8px;
+  width: 28px;
+  text-align: right;
+}
+
+/* 统一值样式 */
+.product-id-value,
+.product-category-value {
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background-color: rgba(241, 245, 249, 0.7);
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  color: #475569;
+  flex-grow: 1;
+}
+
+/* 产品操作按钮 */
+.product-actions {
+  padding: 0 16px 16px;
+  text-align: right;
 }
 
 /* 按钮样式 */
@@ -307,99 +499,6 @@ button#search:hover {
 button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-/* 评论列表样式 */
-.reviews-section {
-  background: rgba(240, 180, 210, 0.15);
-}
-
-#reviews-header {
-  padding: 20px 25px 0;
-}
-
-#reviews-header h3 {
-  font-size: 18px;
-  color: #4a6fa5;
-  display: flex;
-  align-items: center;
-}
-
-#reviews-header h3 i {
-  margin-right: 10px;
-}
-
-.empty-reviews {
-  text-align: center;
-  padding: 60px 20px;
-  color: #64748b;
-}
-
-.empty-reviews i {
-  font-size: 50px;
-  margin-bottom: 15px;
-  color: #cbd5e1;
-}
-
-.empty-reviews p {
-  font-size: 16px;
-  margin-top: 10px;
-}
-
-.review-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 0 25px 25px;
-}
-
-.review-item {
-  border-radius: 10px;
-  padding: 20px;
-  transition: all 0.3s ease;
-  border: 1px solid #f1f5f9;
-}
-
-.review-item:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.review-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: #64748b;
-  gap: 15px;
-}
-
-.review-user {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.review-rating {
-  color: #f59e0b;
-}
-
-.review-date {
-  margin-left: auto;
-  color: #94a3b8;
-  font-size: 13px;
-}
-
-.review-content {
-  line-height: 1.7;
-  margin-bottom: 15px;
-  color: #334155;
-  font-size: 15px;
-}
-
-.review-actions {
-  display: flex;
-  justify-content: flex-end;
 }
 
 .analyze-btn {

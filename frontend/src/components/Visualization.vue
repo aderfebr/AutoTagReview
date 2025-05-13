@@ -91,13 +91,13 @@ import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers';
 import { Scatter3DChart } from 'echarts-gl/charts';
 import { Grid3DComponent } from 'echarts-gl/components';
-import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
 import Nav from './Nav.vue';
 import Title from './Title.vue';
 
 // 注册必要的组件
-use([CanvasRenderer, Scatter3DChart, Grid3DComponent, TitleComponent, TooltipComponent, LegendComponent]);
+use([CanvasRenderer, Scatter3DChart, Grid3DComponent, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
 
 const isLoadingHistory = ref(false)
 const historyId = ref([])

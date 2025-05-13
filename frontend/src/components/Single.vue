@@ -122,7 +122,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Nav from './Nav.vue';
 import Title from './Title.vue';
@@ -135,6 +135,13 @@ const results = ref({
   textrank: [],
   llm_wo: [],
   llm_w: []
+});
+const progress = computed(() => {
+  const methods = Object.values(results.value);
+  const totalMethods = methods.length;
+  const completedMethods = methods.filter(method => method && method.length > 0).length;
+  
+  return Math.round((completedMethods / totalMethods) * 100);
 });
 
 const route = useRoute()
@@ -488,6 +495,39 @@ button:disabled {
 .empty-state i {
   margin-right: 8px;
   color: #4a6fa5;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(90deg, #0069d9, #138496);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 div::-webkit-scrollbar {
