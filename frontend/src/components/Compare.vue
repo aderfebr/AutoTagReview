@@ -39,16 +39,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { BarChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
 import Nav from './Nav.vue';
 import Title from './Title.vue';
 
-use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent]);
 
 const userInput = ref('');
 const isLoading = ref(false);
@@ -62,6 +62,7 @@ onMounted(() => {
   }
 });
 
+const router = useRouter();
 const option1 = ref();
 const option2 = ref();
 
@@ -75,80 +76,95 @@ const analyze = async () => {
     });
     const data = await response.json();
 
-    if (data.label_wo && data.label_wo.labels && data.label_wo.probs) {
+    if (data.bert_wo && data.bert_wo.labels && data.bert_wo.probs) {
       option1.value = {
         xAxis: {
           type: 'category',
-          data: data.label_wo.labels,  // Use the labels from API for x-axis
+          data: data.bert_wo.labels,
           axisLabel: {
-            rotate: 30,  // Rotate labels if they're long
-            interval: 0  // Show all labels
+            rotate: 30,
+            interval: 0
           }
         },
         yAxis: {
           type: 'value',
-          max: 100,  // Fixed maximum value
-          min: 0     // Fixed minimum value
+          max: 100,
+          min: 0
         },
         title: {
           text: '分类结果可视化',
-          subtext: '无标签语义',
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 100,
+          inRange: {
+            color: ['#67e0e3', '#37a2da', '#fd666d']
+          }
         },
         series: [
           {
-            data: data.label_wo.probs.map(prob =>
+            data: data.bert_wo.probs.map(prob =>
               (prob * 100).toFixed(1)
             ),
             type: 'bar',
             label: {
               show: true,
               position: 'top',
-              formatter: '{c}%'  // Show percentage labels on bars
+              formatter: '{c}%'
             }
           }
         ],
         tooltip: {
           trigger: 'axis',
-          formatter: '{b}: {c}%'  // Show tooltip with percentage
+          formatter: '{b}: {c}%'
         }
       };
     }
 
-    if (data.label_w && data.label_w.labels && data.label_w.probs) {
+    if (data.bert_w && data.bert_w.labels && data.bert_w.probs) {
       option2.value = {
         xAxis: {
           type: 'category',
-          data: data.label_w.labels,  // Use the labels from API for x-axis
+          data: data.bert_w.labels,
           axisLabel: {
-            rotate: 30,  // Rotate labels if they're long
-            interval: 0  // Show all labels
+            rotate: 30,
+            interval: 0
           }
         },
         yAxis: {
           type: 'value',
-          max: 100,  // Fixed maximum value
-          min: 0     // Fixed minimum value
+          max: 100,
+          min: 0
         },
         title: {
           text: '分类结果可视化',
-          subtext: '有标签语义',
+          subtext: '语义对齐+标签引导',
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 100,
+          inRange: {
+            color: ['#67e0e3', '#37a2da', '#fd666d']
+          }
         },
         series: [
           {
-            data: data.label_w.probs.map(prob =>
+            data: data.bert_w.probs.map(prob =>
               (prob * 100).toFixed(1)
             ),
             type: 'bar',
             label: {
               show: true,
               position: 'top',
-              formatter: '{c}%'  // Show percentage labels on bars
+              formatter: '{c}%'
             }
           }
         ],
         tooltip: {
           trigger: 'axis',
-          formatter: '{b}: {c}%'  // Show tooltip with percentage
+          formatter: '{b}: {c}%'
         }
       };
     }

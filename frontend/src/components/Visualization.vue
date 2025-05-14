@@ -208,9 +208,6 @@ const fetchHistory = async () => {
   isLoadingHistory.value = true;
   try {
     const response = await fetch(`http://localhost:8000/api/visualization/?id=${historyId.value}`);
-    if (!response.ok) {
-      throw new Error('获取可视化数据失败');
-    }
     const data = await response.json();
 
     // 更新历史记录数据

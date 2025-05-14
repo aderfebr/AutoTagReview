@@ -144,10 +144,6 @@ const clearHistory = async () => {
       method: 'POST'
     })
 
-    if (!response.ok) {
-      throw new Error('清空记录失败')
-    }
-
     history.value = []
     pagination.value = {
       total: 0,
@@ -193,9 +189,6 @@ const fetchHistory = async () => {
   isLoadingHistory.value = true
   try {
     const response = await fetch(`http://localhost:8000/api/taghistory/?page=${pagination.value.current}`)
-    if (!response.ok) {
-      throw new Error('获取评论失败')
-    }
     const data = await response.json()
 
     history.value = data.results

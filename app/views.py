@@ -11,14 +11,15 @@ from .AKE.visualize import visualize
 from .models import Product
 from .models import Review
 from .models import Taghistory
+from .models import Profile
 
 tokenizer_path = './app/models/Qwen2.5-0.5B-Instruct'
 llm_w = './app/models/qwen_sft'
 llm_wo = './app/models/Qwen2.5-0.5B-Instruct'
 bert_path = './app/models/bert-base-chinese'
-label_w = './app/models/label_w'
-label_wo = './app/models/label_wo'
-label_map = './app/models/label_map.json'
+bert_w = './app/models/bert_w'
+bert_wo = './app/models/bert_wo'
+label_map = './app/models/label.json'
 
 def product(request):
     page_number = request.GET.get('page', 1)
@@ -87,19 +88,71 @@ def review(request):
 def compare(request):
     data = json.loads(request.body)
     input_text = data.get('input', '')
-    res1 = predict_bert(label_wo, label_map, input_text)
+
+    with open(label_map, 'r', encoding='utf-8') as f:
+        label = json.load(f)
+    label = {int(k): v for k, v in label.items()}
+
+    res1 = predict_bert(bert_wo, label_map, input_text)
+    res1 = [(label[i], prob) for i, prob in enumerate(res1)]
     res1_sorted = sorted(res1, key=lambda x: x[1], reverse=True)
-    res2 = predict_bert(label_w, label_map, input_text)
+    res2 = predict_bert(bert_w, label_map, input_text)
+    res2 = [(label[i], prob) for i, prob in enumerate(res2)]
     res2_sorted = sorted(res2, key=lambda x: x[1], reverse=True)
     response_data = {
-        'label_wo':{
+        'bert_wo':{
             'labels': [item[0] for item in res1_sorted[:5]],
             'probs': [item[1] for item in res1_sorted[:5]]
         },
-        'label_w':{
+        'bert_w':{
             'labels': [item[0] for item in res2_sorted[:5]],
             'probs': [item[1] for item in res2_sorted[:5]]
         }
+    }
+    return JsonResponse(response_data)
+
+def profile(request):
+    product_id = request.GET.get('product_id')
+    profile = Profile.objects.filter(product_id=str(product_id)).first()
+    probs = profile.probs
+
+    with open(label_map, 'r', encoding='utf-8') as f:
+        label = json.load(f)
+    label = {int(k): v for k, v in label.items()}
+    res = [(label[i], prob) for i, prob in enumerate(probs)]
+    res_sorted = sorted(res, key=lambda x: x[1], reverse=True)
+
+    response_data = {
+        'labels': [item[0] for item in res_sorted[:10]],
+        'probs': [item[1] for item in res_sorted[:10]]
+    }
+    return JsonResponse(response_data)
+
+def recommend(request):
+    query = request.GET.get('query')
+    with open(label_map, 'r', encoding='utf-8') as f:
+        mapping = json.load(f)
+    reverse_mapping = {v: k for k, v in mapping.items()}
+    label_id = int(reverse_mapping[query])
+
+    profiles = Profile.objects.all()
+    sorted_profiles = sorted(
+        profiles,
+        key=lambda x: x.probs[label_id],
+        reverse=True
+    )
+    product_ids = [product.product_id for product in sorted_profiles[:12]]
+    products = Product.objects.filter(product_id__in=product_ids)
+    response_data = {
+        'results': [
+            {
+                'category': i.category,
+                'product_id': i.product_id,
+                'title': i.title,
+                'img': i.img,
+            } 
+            for i in products
+        ]
     }
     return JsonResponse(response_data)
 

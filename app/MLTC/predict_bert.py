@@ -41,11 +41,6 @@ def load_model(model_path, label_map_path, device):
     
     return bert, classify_net, tokenizer
 
-def load_label_map(label_map_path):
-    with open(label_map_path, 'r', encoding='utf-8') as f:
-        label_map = json.load(f)
-    return {int(k): v for k, v in label_map.items()}
-
 def prepare_input(text, tokenizer, device, max_length=128):
     inputs = tokenizer(
         text,
@@ -63,9 +58,6 @@ def predict_bert(model_path, label_map_path, text):
     bert, classify_net, tokenizer = load_model(model_path, label_map_path, device)
     bert.eval()
     classify_net.eval()
-
-    # Load label map
-    label_map = load_label_map(label_map_path)
     
     # Prepare input
     inputs = prepare_input(text, tokenizer, device)
@@ -84,4 +76,4 @@ def predict_bert(model_path, label_map_path, text):
         logits = classify_net(bert_out)
         probs = torch.sigmoid(logits).cpu().numpy().tolist()[0]
     
-    return [(label_map[i], prob) for i, prob in enumerate(probs)]
+    return probs

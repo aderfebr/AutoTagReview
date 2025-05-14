@@ -176,8 +176,6 @@ const analyze = async () => {
       body: JSON.stringify({ 'input': userInput.value })
     });
 
-    if (!response.ok) throw new Error('服务器无响应');
-
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';

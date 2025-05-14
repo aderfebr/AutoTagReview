@@ -42,12 +42,12 @@ import { useRoute } from 'vue-router';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import { BarChart } from 'echarts/charts';
-import { TitleComponent, TooltipComponent, LegendComponent, GridComponent } from 'echarts/components';
+import { TitleComponent, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
 import Nav from './Nav.vue';
 import Title from './Title.vue';
 
-use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent]);
+use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent, VisualMapComponent]);
 
 const productId = ref('');
 const isLoading = ref(false);
@@ -74,9 +74,6 @@ const fetchProfile = async () => {
     params.append('product_id', productId.value.trim())
     
     const response = await fetch(`http://localhost:8000/api/profile/?${params.toString()}`)
-    if (!response.ok) {
-      throw new Error('获取评论失败')
-    }
     const data = await response.json();
 
     if (data && data.labels && data.probs) {
@@ -90,13 +87,18 @@ const fetchProfile = async () => {
           }
         },
         yAxis: {
-          type: 'value',
-          max: 100,  // Fixed maximum value
-          min: 0     // Fixed minimum value
+          type: 'value'
         },
         title: {
-          text: '分类结果可视化',
-          subtext: '无标签语义',
+          text: '产品画像可视化'
+        },
+        visualMap: {
+          show: false,
+          min: 0,
+          max: 15,
+          inRange: {
+            color: ['#67e0e3', '#37a2da', '#fd666d']
+          }
         },
         series: [
           {

@@ -22,6 +22,8 @@ urlpatterns = [
     path("api/product/", views.product),
     path("api/review/", views.review),
     path("api/compare/", views.compare),
+    path("api/profile/", views.profile),
+    path("api/recommend/", views.recommend),
     path("api/tag/", views.tag),
     path("api/taghistory/", views.taghistory),
     path("api/taghistory/clear/", views.cleartaghistory),

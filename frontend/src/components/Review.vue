@@ -146,9 +146,6 @@ const fetchReviews = async () => {
     }
 
     const response = await fetch(`http://localhost:8000/api/review/?${params.toString()}`)
-    if (!response.ok) {
-      throw new Error('获取评论失败')
-    }
     const data = await response.json()
 
     reviews.value = data.results
@@ -179,7 +176,7 @@ const router = useRouter()
 const analyzeClassification = (review) => {
   const encodedReview = encodeURIComponent(review)
   router.push({
-    path: '/label/compare',
+    path: '/classification/compare',
     query: {
       text: encodedReview
     }

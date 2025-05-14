@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, IntField
+from mongoengine import Document, StringField, ListField, FloatField
 
 class Product(Document):
     category = StringField()
@@ -20,3 +20,7 @@ class Taghistory(Document):
     llm_wo = StringField()
     llm_w = StringField()
     time = StringField()
+
+class Profile(Document):
+    product_id = StringField()
+    probs = ListField(FloatField())

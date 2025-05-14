@@ -167,9 +167,6 @@ const fetchProducts = async () => {
     }
 
     const response = await fetch(`http://localhost:8000/api/product/?${params.toString()}`)
-    if (!response.ok) {
-      throw new Error('获取产品失败')
-    }
     const data = await response.json()
 
     products.value = data.results
